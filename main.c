@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+//Define the instructions with all of it's properties.
 typedef struct {
     char name[10];    
     char funct7[8];   
@@ -21,7 +22,7 @@ typedef struct {
     char encoding[6]; 
 } Register;
 
-
+//Store the data, in the same order we created its properties, for example, registers mein pehle "name", fir "encoding"
 Register RegList[] = {
         {"zero", "00000"},
         {"ra", "00001"},
@@ -38,6 +39,7 @@ Register RegList[] = {
         {"t3", "11100"}, {"t4", "11101"}, {"t5", "11110"}, {"t6", "11111"}
     };
 
+    //"name", "funct7", "funct3", "opcode"
     RTypeInstruction Rtype[] = {
         {"add", "0000000", "000", "0110011"},
         {"sub", "0100000", "000", "0110011"},
@@ -49,16 +51,16 @@ Register RegList[] = {
         {"or",  "0000000", "110", "0110011"},
         {"and", "0000000", "111", "0110011"},
     };
-    int Rsize = sizeof(Rtype)/(sizeof(RTypeInstruction));
+    int Rsize = sizeof(Rtype)/(sizeof(RTypeInstruction));    //Number of R type instrunctions 
 
     STypeInstruction Stype[] = {
         {"sw", "010", "0100011"}
     };
-    int Ssize = sizeof(Stype)/sizeof(STypeInstruction);
+    int Ssize = sizeof(Stype)/sizeof(STypeInstruction);      //Number of S type instructions
 
 
-
-char* imm_to_bin(int num, int bits, char* result){
+//immediate will be in decimal, so a decimal to binary convertor.
+char* imm_to_bin(int num, int bits, char* result){  //num: What you want to convert. bits:Into how many bits. result: Where you want to store it.
     if (num <0){
         num = num + (1<<bits);
     }
@@ -70,6 +72,7 @@ char* imm_to_bin(int num, int bits, char* result){
     return result;
 }
 
+//Finds the register with name "name" and returns its "encoding" value.
 Register* find_reg(char* name, Register* Reg_list){
     for (int i = 0; i<32; i++){
         if (strcmp(Reg_list[i].name, name) == 0){
@@ -79,6 +82,7 @@ Register* find_reg(char* name, Register* Reg_list){
     return NULL;
 }
 
+//Finds the Rtype Instruction and returns that instruction
 RTypeInstruction* find_Rinst(char* name, RTypeInstruction* Rlist, int size){
     for (int i = 0; i<size; i++){
         if (strcmp(Rlist[i].name, name) == 0){
@@ -98,7 +102,7 @@ STypeInstruction* find_Sinst(char* name, STypeInstruction* Slist, int size){
 }
 
 
-//Master find instruction function
+//Master FIND INSTRUCTION function
 char find_inst(char* name,RTypeInstruction* Rlist, int Rsize, STypeInstruction* Slist, int Ssize){
     if (find_Rinst(name, Rlist, Rsize) != NULL){
         return 'R';
@@ -113,7 +117,7 @@ char find_inst(char* name,RTypeInstruction* Rlist, int Rsize, STypeInstruction* 
 void encoder(FILE* input, FILE* output){
     char line[100];
 
-    while(fgets(line, 100, input) != NULL){
+    while(fgets(line, 100, input) != NULL){   //Reads one line at a time. Do everything INSIDE THIS LOOP, AFTER PARSING!
         line[strcspn(line, "\r\n")] = '\0';
 
         //SKIP EMPTY LINES
@@ -124,13 +128,17 @@ void encoder(FILE* input, FILE* output){
         //Parsing, ie splitting the line into tokens.
         char* tokens[10];
         int count = 0;
-
         char* elements = strtok(line, " ,()");
         while (elements != NULL){
             tokens[count] = elements;
             count++;
             elements = strtok(NULL, " ,()");
         }
+
+        //Example to understand what happened above: Given line = add t0, zero, t0
+        //Tokens will become: tokens = {"add", "t0", "zero", "t0"}, very easy to handle now.
+        //Another example: Given line = sw t0, 10(t1)
+        //tokens = {"sw", "t0", "10", "t1"}
 
         //RTYPE INSTRUNCTION ENCODING
         if (find_inst(tokens[0], Rtype, Rsize, Stype, Ssize) == 'R') {
@@ -153,6 +161,7 @@ void encoder(FILE* input, FILE* output){
             Register* rs2 = find_reg(tokens[1], RegList);
             Register* rs1 = find_reg(tokens[3], RegList);
             char imm[12];
+            
             imm_to_bin(atoi(tokens[2]), 12, imm);
             //UPPER IMM
             char upper[8];
@@ -178,7 +187,7 @@ void encoder(FILE* input, FILE* output){
     }
 }
 
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[]){        //for accessing input and output files in the command termial. First compile, then run .\main.exe input.txt output.txt 
     FILE* input = fopen(argv[1], "r");
     FILE* output = fopen(argv[2], "w");
 
