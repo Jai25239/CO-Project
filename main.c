@@ -72,7 +72,7 @@ char* imm_to_bin(int num, int bits, char* result){  //num: What you want to conv
     return result;
 }
 
-//Finds the register with name "name" and returns its "encoding" value.
+//Finds the register with name "name" and returns that register.
 Register* find_reg(char* name, Register* Reg_list){
     for (int i = 0; i<32; i++){
         if (strcmp(Reg_list[i].name, name) == 0){
