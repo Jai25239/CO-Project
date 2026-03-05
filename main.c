@@ -16,6 +16,17 @@ typedef struct {
     char opcode[8];
 }STypeInstruction;
 
+typedef struct{
+    char name[6];
+    char funct3[4];
+    char opcode[8];
+}ITypeInstruction;
+
+typedef struct{
+    char name[6];
+    char opcode[8];
+}UTypeInstruction;
+
 // For registers
 typedef struct {
     char name[6];     
@@ -57,6 +68,20 @@ Register RegList[] = {
         {"sw", "010", "0100011"}
     };
     int Ssize = sizeof(Stype)/sizeof(STypeInstruction);      //Number of S type instructions
+
+    ITypeInstruction Itype[]={
+        {"lw","010","0000011"},
+        {"addi","000","0010011"},
+        {"sltiu","011","0010011"},
+        {"jalr","000","1100111"}
+    };
+    int Isize = sizeof(Itype)/sizeof(ITypeInstruction);
+
+    UTypeInstruction Utype[]={
+        {"auipc","0010111"},
+        {"lui","0110111"}
+    };
+    int Usize = sizeof(Utype)/sizeof(UTypeInstruction);
 
 
 //immediate will be in decimal, so a decimal to binary convertor.
@@ -101,14 +126,38 @@ STypeInstruction* find_Sinst(char* name, STypeInstruction* Slist, int size){
     return NULL;
 }
 
+ITypeInstruction* find_Iinst(char* name, ITypeInstruction* Ilist,int size){
+    for(int i = 0; i<size; i++){
+        if(strcmp(Ilist[i].name,name)==0){
+            return &Ilist[i];
+        }
+    }
+    return NULL;
+}
+
+UTypeInstruction* find_Uinst(char* name, UTypeInstruction* Ulist, int size){
+    for(int i = 0; i< size; i++){
+        if(strcmp(Ulist[i].name,name)==0){
+            return &Ulist[i];
+        }
+    }
+    return NULL;
+}
+
 
 //Master FIND INSTRUCTION function
-char find_inst(char* name,RTypeInstruction* Rlist, int Rsize, STypeInstruction* Slist, int Ssize){
+char find_inst(char* name,RTypeInstruction* Rlist, int Rsize, STypeInstruction* Slist, int Ssize,ITypeInstruction* Ilist,int Isize, UTypeInstruction* Ulist, int Usize){
     if (find_Rinst(name, Rlist, Rsize) != NULL){
         return 'R';
     }
     if (find_Sinst(name, Slist, Ssize) != NULL){
         return 'S';
+    }
+    if(find_Iinst(name,Ilist,Isize) != NULL){
+        return 'I';
+    }
+    if(find_Uinst(name,Ulist,Usize) != NULL){
+        return 'U';
     }
     return '?';
 }
@@ -141,7 +190,7 @@ void encoder(FILE* input, FILE* output){
         //tokens = {"sw", "t0", "10", "t1"}
 
         //RTYPE INSTRUNCTION ENCODING
-        if (find_inst(tokens[0], Rtype, Rsize, Stype, Ssize) == 'R') {
+        if (find_inst(tokens[0], Rtype, Rsize, Stype, Ssize, Itype, Isize, Utype, Usize) == 'R') {
             RTypeInstruction* Instruct = find_Rinst(tokens[0], Rtype, Rsize);
             Register* rd = find_reg(tokens[1], RegList);
             Register* r1 = find_reg(tokens[2], RegList);
@@ -156,7 +205,7 @@ void encoder(FILE* input, FILE* output){
         }
 
         //STYPE INSTRUNCTION ENCODING
-        else if (find_inst(tokens[0], Rtype, Rsize, Stype, Ssize) == 'S'){
+        else if (find_inst(tokens[0], Rtype, Rsize, Stype, Ssize, Itype, Isize, Utype, Usize) == 'S'){
             STypeInstruction* Instruct = find_Sinst(tokens[0], Stype, Ssize);
             Register* rs2 = find_reg(tokens[1], RegList);
             Register* rs1 = find_reg(tokens[3], RegList);
@@ -180,6 +229,40 @@ void encoder(FILE* input, FILE* output){
                 fprintf(output, "%s%s%s%s%s%s\n", upper, rs2->encoding, rs1->encoding, Instruct->funct3, lower, Instruct->opcode);
             }
         } 
+        else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize)=='I'){
+            ITypeInstruction* Instruct = find_Iinst(tokens[0],Itype,Isize);
+            Register* rd = find_reg(tokens[1],RegList);
+            Register* rs1 = NULL;
+            char imm[13];
+            if(strcmp(Instruct->name,"lw")==0){
+                rs1 = find_reg(tokens[3],RegList);
+                imm_to_bin(atoi(tokens[2]),12,imm);
+            }
+            else{
+                rs1 = find_reg(tokens[2],RegList);
+                imm_to_bin(atoi(tokens[3]),12,imm);
+            }
+            if(rd == NULL || rs1 == NULL){
+                printf("register name not found\n");
+                return;
+            }
+            else{
+                fprintf(output, "%s%s%s%s%s\n",imm, rs1->encoding, Instruct->funct3, rd->encoding, Instruct->opcode);
+            }
+        }
+        else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize)=='U'){
+            UTypeInstruction* Instruct = find_Uinst(tokens[0],Utype,Usize);
+            Register* rd = find_reg(tokens[1],RegList);
+            char imm[21];
+            imm_to_bin(atoi(tokens[2]),20,imm);
+            if(rd == NULL){
+                printf("register not found\n");
+                return;
+            }
+            else{
+                fprintf(output,"%s%s%s\n",imm,rd->encoding,Instruct->opcode);
+            }
+        }
         
         else {
             printf("ERROR!");
