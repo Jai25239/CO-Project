@@ -182,7 +182,7 @@ char find_inst(char* name,RTypeInstruction* Rlist, int Rsize, STypeInstruction* 
         return 'U';
     }
     if(find_Jinst(name,Jlist,Jsize) != NULL){
-    return 'J';
+        return 'J';
     }
     return '?';
 }
