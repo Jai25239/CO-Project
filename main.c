@@ -94,7 +94,7 @@ Register RegList[] = {
     JTypeInstruction Jtype[]={
         {"jal","1101111"}
     };
-int Jsize = sizeof(Jtype)/sizeof(JTypeInstruction);
+    int Jsize = sizeof(Jtype)/sizeof(JTypeInstruction);
 
 //immediate will be in decimal, so this function converts decimal to binary (also do 2's complement for negetive decimals)
 char* imm_to_bin(int num, int bits, char* result){  //num: What you want to convert. bits:Into how many bits. result: Where you want to store it.
