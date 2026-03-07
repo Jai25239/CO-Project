@@ -387,15 +387,21 @@ void encoder(FILE* input, FILE* output){
        else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize,Jtype,Jsize,Btype,Bsize)=='J'){
            JTypeInstruction* Instruct = find_Jinst(tokens[0],Jtype,Jsize);
            Register* rd = find_reg(tokens[1],RegList);
-           char imm[21];
            Label* label = find_label(tokens[2]);
-           imm_to_bin(label->address,20,imm);
-           if(rd == NULL){
-               printf("register not found\n");
-               return;
+           if (label == NULL){
+                printf("Error: label '%s' not found\n", tokens[2]);
+                fprintf(output, "Label not found.\n");
+                return;
+            }
+
+            char imm[21];
+            imm_to_bin(label->address,20,imm);
+            if(rd == NULL){
+                printf("register not found\n");
+                return;
            }
-           else{
-               fprintf(output,"%s%s%s\n",imm,rd->encoding,Instruct->opcode);
+            else{
+                fprintf(output,"%s%s%s\n",imm,rd->encoding,Instruct->opcode);
            }
            PC = PC+4;
        }
