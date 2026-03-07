@@ -230,7 +230,7 @@ void encoder(FILE* input, FILE* output){
         }
 
         //STYPE INSTRUNCTION ENCODING
-        else if (find_inst(tokens[0], Rtype, Rsize, Stype, Ssize, Itype, Isize, Utype, Usize) == 'S'){
+        else if (find_inst(tokens[0], Rtype, Rsize, Stype, Ssize, Itype, Isize, Utype, Usize, Jtype, Jsize) == 'S'){
             STypeInstruction* Instruct = find_Sinst(tokens[0], Stype, Ssize);
             Register* rs2 = find_reg(tokens[1], RegList);
             Register* rs1 = find_reg(tokens[3], RegList);
@@ -256,7 +256,7 @@ void encoder(FILE* input, FILE* output){
         } 
 
         //I Type Instruction Encoding.
-        else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize)=='I'){
+        else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize, Jtype, Jsize)=='I'){
             ITypeInstruction* Instruct = find_Iinst(tokens[0],Itype,Isize);
             Register* rd = find_reg(tokens[1],RegList);
             Register* rs1 = NULL;
@@ -279,7 +279,7 @@ void encoder(FILE* input, FILE* output){
         }
 
         //U Type Instruction Encoding.
-        else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize)=='U'){
+        else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize, Jtype, Jsize)=='U'){
             UTypeInstruction* Instruct = find_Uinst(tokens[0],Utype,Usize);
             Register* rd = find_reg(tokens[1],RegList);
             char imm[21];
@@ -293,11 +293,6 @@ void encoder(FILE* input, FILE* output){
             }
         }
         
-        else {
-            printf("ERROR!");
-        }
-    }
-}
        //J Type Instruction Encoding
        else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize,Jtype,Jsize)=='J'){
            JTypeInstruction* Instruct = find_Jinst(tokens[0],Jtype,Jsize);
