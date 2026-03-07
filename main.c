@@ -40,7 +40,7 @@ Register RegList[] = {
     };
 
     //"name", "funct7", "funct3", "opcode"
-    RTypeInstruction Rtype[] = {
+RTypeInstruction Rtype[] = {
         {"add", "0000000", "000", "0110011"},
         {"sub", "0100000", "000", "0110011"},
         {"sll", "0000000", "001", "0110011"},
@@ -53,7 +53,7 @@ Register RegList[] = {
     };
     int Rsize = sizeof(Rtype)/(sizeof(RTypeInstruction));    //Number of R type instrunctions 
 
-    STypeInstruction Stype[] = {
+STypeInstruction Stype[] = {
         {"sw", "010", "0100011"}
     };
     int Ssize = sizeof(Stype)/sizeof(STypeInstruction);      //Number of S type instructions
