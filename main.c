@@ -1,6 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+typedef struct {
+    char name[50];
+    int address;
+} Label;
+
+Label Label_list[100];
+int label_count = 0;
 //Defined seperate structs to store the instruction, register and their properties, encoding in a structured way.
 typedef struct {
     char name[10];    
@@ -191,6 +199,14 @@ BTypeInstruction* find_Binst(char* name, BTypeInstruction* Blist, int size){
     return NULL;
 }
 
+Label* find_label(char* name){
+    for(int i=0;i<label_count;i++){
+        if(strcmp(Label_list[i].name,name)==0){
+            return &Label_list[i];
+        }
+    }
+    return NULL;
+}
 //Master FIND INSTRUCTION function (find the type of instruction.)
 char find_inst(char* name,RTypeInstruction* Rlist, int Rsize, STypeInstruction* Slist, int Ssize,ITypeInstruction* Ilist,int Isize, UTypeInstruction* Ulist, int Usize, JTypeInstruction* Jlist, int Jsize,BTypeInstruction* Blist, int Bsize){
     if (find_Rinst(name, Rlist, Rsize) != NULL){
@@ -383,12 +399,51 @@ void encoder(FILE* input, FILE* output){
     }
 }
   
+void Store_Label(FILE* input){
+    char line[100];
+    int PC = 0;
 
+    while(fgets(line, 100, input) != NULL){
+        line[strcspn(line, "\r\n")] = '\0';
+
+        if (strlen(line) == 0){
+            continue;
+        }
+
+        char* tokens[10];
+        int count = 0;
+
+        char* elements = strtok(line, " ,()");
+        while (elements != NULL){
+            tokens[count] = elements;
+            count++;
+            elements = strtok(NULL, " ,()");
+        }
+
+        char* colon = strchr(tokens[0], ':');
+
+        if (colon != NULL){
+            *colon = '\0';
+
+            strcpy(Label_list[label_count].name, tokens[0]);
+            Label_list[label_count].address = PC;
+
+            label_count++;
+        }
+
+        if (count <= 1){
+            continue;
+        }
+
+        PC += 4;
+    }
+}
 //This is the main function which takes assembly file and address of output file in which binary encoding has to be written.
 int main(int argc, char* argv[]){        //for accessing input and output files in the command termial. First compile, then run .\main.exe input.txt output.txt 
     FILE* input = fopen(argv[1], "r");
     FILE* output = fopen(argv[2], "w");
-
+    Store_Label(input);
+    rewind(input);      
     encoder(input, output);
     return 0;
 }
