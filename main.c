@@ -344,7 +344,7 @@ void encoder(FILE* input, FILE* output){
         } 
 
         //I Type Instruction Encoding.
-        else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize, Jtype, Jsize,Btype,Bsize)=='I'){
+        else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize, Jtype, Jsize ,Btype,Bsize)=='I'){
             ITypeInstruction* Instruct = find_Iinst(tokens[0],Itype,Isize);
             Register* rd = find_reg(tokens[1],RegList);
             Register* rs1 = NULL;
@@ -358,7 +358,7 @@ void encoder(FILE* input, FILE* output){
                 imm_to_bin(atoi(tokens[3]),12,imm);
             }
             if(rd == NULL || rs1 == NULL){
-                printf("register name not found\n");
+                printf("register name not found, I type, %d line\n", PC/4);
                 return;
             }
             else{
@@ -374,7 +374,7 @@ void encoder(FILE* input, FILE* output){
             char imm[21];
             imm_to_bin(atoi(tokens[2]),20,imm);
             if(rd == NULL){
-                printf("register not found\n");
+                printf("register not found, U type\n");
                 return;
             }
             else{
@@ -397,7 +397,7 @@ void encoder(FILE* input, FILE* output){
             char imm[21];
             imm_to_bin(label->address,20,imm);
             if(rd == NULL){
-                printf("register not found\n");
+                printf("register not found, J type\n");
                 return;
            }
             else{
@@ -444,7 +444,10 @@ void encoder(FILE* input, FILE* output){
             fprintf(output,"%s%s%s%s%s%s\n", upper, rs2->encoding, rs1->encoding, Instruct->funct3, lower, Instruct->opcode);
             PC = PC+4;
         }
-       else { 
+        else if (0<count<=1){
+            continue;
+        }
+        else { 
             fprintf(output, "Error in line %d", PC/4);
             printf("ERROR!");
        }
