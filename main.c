@@ -388,7 +388,8 @@ void encoder(FILE* input, FILE* output){
            JTypeInstruction* Instruct = find_Jinst(tokens[0],Jtype,Jsize);
            Register* rd = find_reg(tokens[1],RegList);
            char imm[21];
-           imm_to_bin(atoi(tokens[2]),20,imm);
+           Label* label = find_label(tokens[2]);
+           imm_to_bin(label->address,20,imm);
            if(rd == NULL){
                printf("register not found\n");
                return;
