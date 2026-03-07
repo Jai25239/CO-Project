@@ -7,8 +7,6 @@ typedef struct {
     int address;
 } Label;
 
-Label Label_list[100];
-int label_count = 0;
 //Defined seperate structs to store the instruction, register and their properties, encoding in a structured way.
 typedef struct {
     char name[10];    
@@ -50,6 +48,9 @@ typedef struct {
     char name[6];     
     char encoding[6]; 
 }Register;
+
+Label Label_list[100];  //Storing all the labels before calling encoder function.
+int label_count = 0;
 
 //Storing the register and their encoding, in the same order we created its properties, for example, registers mein pehle "name", fir "encoding"
 Register RegList[] = {
@@ -225,180 +226,12 @@ char find_inst(char* name,RTypeInstruction* Rlist, int Rsize, STypeInstruction* 
         return 'J';
     }
     if(find_Binst(name,Btype,Bsize) != NULL){
-    return 'B';
+        return 'B';
     }
     return '?';
 }
 
-//This is the responsible function which breaks assembly written line into tokens one by one taking lines from the file.
-//After breaking into tokens we find the encoding of opcode, funct3 or funct7 from the previous arrays and prints them into the sequence, which is encoding of the given assembly code. 
-void encoder(FILE* input, FILE* output){
-    char line[100];
-
-    while(fgets(line, 100, input) != NULL){   //Reads one line at a time. Do everything INSIDE THIS LOOP, AFTER PARSING!
-        line[strcspn(line, "\r\n")] = '\0';
-
-        //SKIP EMPTY LINES
-        if (strlen(line) == 0){
-            continue;
-        }
-
-        //Parsing, ie splitting the line into tokens.
-        char* tokens[10];
-        int count = 0;
-        char* elements = strtok(line, " ,()");
-        while (elements != NULL){
-            tokens[count] = elements;
-            count++;
-            elements = strtok(NULL, " ,()");
-        }
-
-        //Example to understand what happened above: Given line = add t0, zero, t0
-        //Tokens will become: tokens = {"add", "t0", "zero", "t0"}, very easy to handle now.
-        //Another example: Given line = sw t0, 10(t1)
-        //tokens = {"sw", "t0", "10", "t1"}
-
-        //RTYPE INSTRUNCTION ENCODING
-        if (find_inst(tokens[0], Rtype, Rsize, Stype, Ssize, Itype, Isize, Utype, Usize, Jtype, Jsize,Btype,Bsize) == 'R') {
-            RTypeInstruction* Instruct = find_Rinst(tokens[0], Rtype, Rsize);
-            Register* rd = find_reg(tokens[1], RegList);
-            Register* r1 = find_reg(tokens[2], RegList);
-            Register* r2 = find_reg(tokens[3], RegList);
-            
-            if (Instruct == NULL || rd == NULL || r1 == NULL || r2 == NULL){
-                printf("Incorrect instruction format.\nFor Rtype intruction, the format is: Instruction Name rd, r1, r2");
-                return;
-            } else {
-                fprintf(output, "%s%s%s%s%s%s\n", Instruct->funct7, r2->encoding, r1->encoding, Instruct->funct3, rd->encoding, Instruct->opcode);
-            }
-        }
-
-        //STYPE INSTRUNCTION ENCODING
-        else if (find_inst(tokens[0], Rtype, Rsize, Stype, Ssize, Itype, Isize, Utype, Usize, Jtype, Jsize,Btype,Bsize) == 'S'){
-            STypeInstruction* Instruct = find_Sinst(tokens[0], Stype, Ssize);
-            Register* rs2 = find_reg(tokens[1], RegList);
-            Register* rs1 = find_reg(tokens[3], RegList);
-            char imm[12];
-            
-            imm_to_bin(atoi(tokens[2]), 12, imm);
-            //UPPER IMM
-            char upper[8];
-            strncpy(upper, imm, 7);
-            upper[7] = '\0';
-
-            //LOWER IMM
-            char lower[6];
-            strncpy(lower, imm+7, 5);
-            lower[5] = '\0';
-
-            if (Instruct == NULL || rs2 == NULL || rs1 == NULL){
-                printf("Incorrect instruction format.\nFor Stype intruction, the format is: Instruction Name rs2, imm(rs1)");
-                return;
-            } else{
-                fprintf(output, "%s%s%s%s%s%s\n", upper, rs2->encoding, rs1->encoding, Instruct->funct3, lower, Instruct->opcode);
-            }
-        } 
-
-        //I Type Instruction Encoding.
-        else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize, Jtype, Jsize,Btype,Bsize)=='I'){
-            ITypeInstruction* Instruct = find_Iinst(tokens[0],Itype,Isize);
-            Register* rd = find_reg(tokens[1],RegList);
-            Register* rs1 = NULL;
-            char imm[13];
-            if(strcmp(Instruct->name,"lw")==0){
-                rs1 = find_reg(tokens[3],RegList);
-                imm_to_bin(atoi(tokens[2]),12,imm);
-            }
-            else{
-                rs1 = find_reg(tokens[2],RegList);
-                imm_to_bin(atoi(tokens[3]),12,imm);
-            }
-            if(rd == NULL || rs1 == NULL){
-                printf("register name not found\n");
-                return;
-            }
-            else{
-                fprintf(output, "%s%s%s%s%s\n",imm, rs1->encoding, Instruct->funct3, rd->encoding, Instruct->opcode);
-            }
-        }
-
-        //U Type Instruction Encoding.
-        else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize, Jtype, Jsize,Btype,Bsize)=='U'){
-            UTypeInstruction* Instruct = find_Uinst(tokens[0],Utype,Usize);
-            Register* rd = find_reg(tokens[1],RegList);
-            char imm[21];
-            imm_to_bin(atoi(tokens[2]),20,imm);
-            if(rd == NULL){
-                printf("register not found\n");
-                return;
-            }
-            else{
-                fprintf(output,"%s%s%s\n",imm,rd->encoding,Instruct->opcode);
-            }
-        }
-        
-       //J Type Instruction Encoding
-       else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize,Jtype,Jsize,Btype,Bsize)=='J'){
-           JTypeInstruction* Instruct = find_Jinst(tokens[0],Jtype,Jsize);
-           Register* rd = find_reg(tokens[1],RegList);
-           char imm[21];
-           imm_to_bin(atoi(tokens[2]),20,imm);
-           if(rd == NULL){
-               printf("register not found\n");
-               return;
-           }
-           else{
-               fprintf(output,"%s%s%s\n",imm,rd->encoding,Instruct->opcode);
-           }
-       }
-      //U Type Instruction Encoding.
-      else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize,Jtype,Jsize,Btype,Bsize)=='B'){
-
-    BTypeInstruction* Instruct = find_Binst(tokens[0],Btype,Bsize);
-
-    Register* rs1 = find_reg(tokens[1],RegList);
-    Register* rs2 = find_reg(tokens[2],RegList);
-
-    int offset = atoi(tokens[3]);
-
-    if(offset % 2 != 0){
-        printf("Branch offset must be 2-byte aligned\n");
-        return;
-    }
-
-    offset = offset >> 1;
-
-    char imm[13];
-    imm_to_bin(offset,12,imm);
-
-    char bit12 = imm[0];
-    char bit11 = imm[1];
-
-    char bit10_5[7];
-    strncpy(bit10_5,imm+2,6);
-    bit10_5[6] = '\0';
-
-    char bit4_1[5];
-    strncpy(bit4_1,imm+8,4);
-    bit4_1[4] = '\0';
-
-    fprintf(output,"%c%s%s%s%s%s%c%s\n",
-        bit12,
-        bit10_5,
-        rs2->encoding,
-        rs1->encoding,
-        Instruct->funct3,
-        bit4_1,
-        bit11,
-        Instruct->opcode
-    );
-}
-       else { 
-           printf("ERROR!");
-       }
-    }
-}
-  
+    //Filling the Label_list with all the labels.
 void Store_Label(FILE* input){
     char line[100];
     int PC = 0;
@@ -438,6 +271,179 @@ void Store_Label(FILE* input){
         PC += 4;
     }
 }
+
+//This is the responsible function which breaks assembly written line into tokens one by one taking lines from the file.
+//After breaking into tokens we find the encoding of opcode, funct3 or funct7 from the previous arrays and prints them into the sequence, which is encoding of the given assembly code. 
+void encoder(FILE* input, FILE* output){
+    char line[100];
+
+    while(fgets(line, 100, input) != NULL){   //Reads one line at a time. Do everything INSIDE THIS LOOP, AFTER PARSING!
+        line[strcspn(line, "\r\n")] = '\0';
+        int PC = 0;
+        //SKIP EMPTY LINES
+        if (strlen(line) == 0){
+            continue;
+        }
+
+        //Parsing, ie splitting the line into tokens.
+        char* tokens[10];
+        int count = 0;
+        char* elements = strtok(line, " ,()");
+        while (elements != NULL){
+            tokens[count] = elements;
+            count++;
+            elements = strtok(NULL, " ,()");
+        }
+
+        //Example to understand what happened above: Given line = add t0, zero, t0
+        //Tokens will become: tokens = {"add", "t0", "zero", "t0"}, very easy to handle now.
+        //Another example: Given line = sw t0, 10(t1)
+        //tokens = {"sw", "t0", "10", "t1"}
+
+        //RTYPE INSTRUNCTION ENCODING
+        if (find_inst(tokens[0], Rtype, Rsize, Stype, Ssize, Itype, Isize, Utype, Usize, Jtype, Jsize,Btype,Bsize) == 'R') {
+            RTypeInstruction* Instruct = find_Rinst(tokens[0], Rtype, Rsize);
+            Register* rd = find_reg(tokens[1], RegList);
+            Register* r1 = find_reg(tokens[2], RegList);
+            Register* r2 = find_reg(tokens[3], RegList);
+            
+            if (Instruct == NULL || rd == NULL || r1 == NULL || r2 == NULL){
+                printf("Incorrect instruction format.\nFor Rtype intruction, the format is: Instruction Name rd, r1, r2");
+                return;
+            } else {
+                fprintf(output, "%s%s%s%s%s%s\n", Instruct->funct7, r2->encoding, r1->encoding, Instruct->funct3, rd->encoding, Instruct->opcode);
+            }
+            PC = PC+4;
+        }
+
+        //STYPE INSTRUNCTION ENCODING
+        else if (find_inst(tokens[0], Rtype, Rsize, Stype, Ssize, Itype, Isize, Utype, Usize, Jtype, Jsize,Btype,Bsize) == 'S'){
+            STypeInstruction* Instruct = find_Sinst(tokens[0], Stype, Ssize);
+            Register* rs2 = find_reg(tokens[1], RegList);
+            Register* rs1 = find_reg(tokens[3], RegList);
+            char imm[12];
+            
+            imm_to_bin(atoi(tokens[2]), 12, imm);
+            //UPPER IMM
+            char upper[8];
+            strncpy(upper, imm, 7);
+            upper[7] = '\0';
+
+            //LOWER IMM
+            char lower[6];
+            strncpy(lower, imm+7, 5);
+            lower[5] = '\0';
+
+            if (Instruct == NULL || rs2 == NULL || rs1 == NULL){
+                printf("Incorrect instruction format.\nFor Stype intruction, the format is: Instruction Name rs2, imm(rs1)");
+                return;
+            } else{
+                fprintf(output, "%s%s%s%s%s%s\n", upper, rs2->encoding, rs1->encoding, Instruct->funct3, lower, Instruct->opcode);
+            }
+            PC = PC+4;
+        } 
+
+        //I Type Instruction Encoding.
+        else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize, Jtype, Jsize,Btype,Bsize)=='I'){
+            ITypeInstruction* Instruct = find_Iinst(tokens[0],Itype,Isize);
+            Register* rd = find_reg(tokens[1],RegList);
+            Register* rs1 = NULL;
+            char imm[13];
+            if(strcmp(Instruct->name,"lw")==0){
+                rs1 = find_reg(tokens[3],RegList);
+                imm_to_bin(atoi(tokens[2]),12,imm);
+            }
+            else{
+                rs1 = find_reg(tokens[2],RegList);
+                imm_to_bin(atoi(tokens[3]),12,imm);
+            }
+            if(rd == NULL || rs1 == NULL){
+                printf("register name not found\n");
+                return;
+            }
+            else{
+                fprintf(output, "%s%s%s%s%s\n",imm, rs1->encoding, Instruct->funct3, rd->encoding, Instruct->opcode);
+            }
+            PC = PC+4;
+        }
+
+        //U Type Instruction Encoding.
+        else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize, Jtype, Jsize,Btype,Bsize)=='U'){
+            UTypeInstruction* Instruct = find_Uinst(tokens[0],Utype,Usize);
+            Register* rd = find_reg(tokens[1],RegList);
+            char imm[21];
+            imm_to_bin(atoi(tokens[2]),20,imm);
+            if(rd == NULL){
+                printf("register not found\n");
+                return;
+            }
+            else{
+                fprintf(output,"%s%s%s\n",imm,rd->encoding,Instruct->opcode);
+            }
+            PC = PC+4;
+        }
+        
+       //J Type Instruction Encoding
+       else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize,Jtype,Jsize,Btype,Bsize)=='J'){
+           JTypeInstruction* Instruct = find_Jinst(tokens[0],Jtype,Jsize);
+           Register* rd = find_reg(tokens[1],RegList);
+           char imm[21];
+           imm_to_bin(atoi(tokens[2]),20,imm);
+           if(rd == NULL){
+               printf("register not found\n");
+               return;
+           }
+           else{
+               fprintf(output,"%s%s%s\n",imm,rd->encoding,Instruct->opcode);
+           }
+           PC = PC+4;
+       }
+
+      //B Type Instruction Encoding.
+      else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize,Jtype,Jsize,Btype,Bsize)=='B'){
+            BTypeInstruction* Instruct = find_Binst(tokens[0],Btype,Bsize);
+            Register* rs1 = find_reg(tokens[1],RegList);
+            Register* rs2 = find_reg(tokens[2],RegList);
+            Label* label = find_label(tokens[3]);
+
+            if (label == NULL){
+                printf("Error: label '%s' not found\n", tokens[3]);
+                fprintf(output, "Label not found.\n");
+                return;
+            }
+            int offset = PC - label->address;
+
+            char imm[12];
+            imm_to_bin(offset,12,imm);
+
+            char upper[8];  // imm[12|10:5]
+            upper[0] = imm[0];   // bit 12
+            upper[1] = imm[2];   // bit 10
+            upper[2] = imm[3];   // bit 9
+            upper[3] = imm[4];   // bit 8
+            upper[4] = imm[5];   // bit 7
+            upper[5] = imm[6];   // bit 6
+            upper[6] = imm[7];   // bit 5
+            upper[7] = '\0';
+
+            char lower[6];  // imm[4:1|11]
+            lower[0] = imm[8];   // bit 4
+            lower[1] = imm[9];   // bit 3
+            lower[2] = imm[10];  // bit 2
+            lower[3] = imm[11];  // bit 1
+            lower[4] = imm[1];   // bit 11
+            lower[5] = '\0';
+
+            fprintf(output,"%s%s%s%s%s%s\n", upper, rs2->encoding, rs1->encoding, Instruct->funct3, lower, Instruct->opcode);
+            PC = PC+4;
+        }
+       else { 
+            fprintf(output, "Error in line %d", PC/4);
+            printf("ERROR!");
+       }
+    }
+}
+
 //This is the main function which takes assembly file and address of output file in which binary encoding has to be written.
 int main(int argc, char* argv[]){        //for accessing input and output files in the command termial. First compile, then run .\main.exe input.txt output.txt 
     FILE* input = fopen(argv[1], "r");
