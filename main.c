@@ -31,6 +31,12 @@ typedef struct{
     char opcode[8];
 }JTypeInstruction;
 
+typedef struct{
+    char name[6];
+    char funct3[4];
+    char opcode[8];
+}BTypeInstruction;
+
 // For registers
 typedef struct {
     char name[6];     
@@ -94,6 +100,17 @@ STypeInstruction Stype[] = {
         {"jal","1101111"}
     };
     int Jsize = sizeof(Jtype)/sizeof(JTypeInstruction);
+
+BTypeInstruction Btype[] = {
+    {"beq","000","1100011"},
+    {"bne","001","1100011"},
+    {"blt","100","1100011"},
+    {"bge","101","1100011"},
+    {"bltu","110","1100011"},
+    {"bgeu","111","1100011"}
+};
+
+int Bsize = sizeof(Btype)/sizeof(BTypeInstruction);
 
 //immediate will be in decimal, so this function converts decimal to binary (also do 2's complement for negetive decimals)
 char* imm_to_bin(int num, int bits, char* result){  //num: What you want to convert. bits:Into how many bits. result: Where you want to store it.
@@ -165,6 +182,15 @@ JTypeInstruction* find_Jinst(char* name, JTypeInstruction* Jlist, int size){
     }
     return NULL;
 }
+//Finds the Btype Instruction and returns that address where that instruction is stored, otherwise gives NULL.
+BTypeInstruction* find_Binst(char* name, BTypeInstruction* Blist, int size){
+    for(int i=0;i<size;i++){
+        if(strcmp(Blist[i].name,name)==0){
+            return &Blist[i];
+        }
+    }
+    return NULL;
+}
 
 //Master FIND INSTRUCTION function (find the type of instruction.)
 char find_inst(char* name,RTypeInstruction* Rlist, int Rsize, STypeInstruction* Slist, int Ssize,ITypeInstruction* Ilist,int Isize, UTypeInstruction* Ulist, int Usize, JTypeInstruction* Jlist, int Jsize){
@@ -182,6 +208,9 @@ char find_inst(char* name,RTypeInstruction* Rlist, int Rsize, STypeInstruction* 
     }
     if(find_Jinst(name,Jlist,Jsize) != NULL){
         return 'J';
+    }
+    if(find_Binst(name,Btype,Bsize) != NULL){
+    return 'B';
     }
     return '?';
 }
@@ -307,7 +336,48 @@ void encoder(FILE* input, FILE* output){
                fprintf(output,"%s%s%s\n",imm,rd->encoding,Instruct->opcode);
            }
        }
+      //U Type Instruction Encoding.
+      else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize,Jtype,Jsize)=='B'){
 
+    BTypeInstruction* Instruct = find_Binst(tokens[0],Btype,Bsize);
+
+    Register* rs1 = find_reg(tokens[1],RegList);
+    Register* rs2 = find_reg(tokens[2],RegList);
+
+    int offset = atoi(tokens[3]);
+
+    if(offset % 2 != 0){
+        printf("Branch offset must be 2-byte aligned\n");
+        return;
+    }
+
+    offset = offset >> 1;
+
+    char imm[13];
+    imm_to_bin(offset,12,imm);
+
+    char bit12 = imm[0];
+    char bit11 = imm[1];
+
+    char bit10_5[7];
+    strncpy(bit10_5,imm+2,6);
+    bit10_5[6] = '\0';
+
+    char bit4_1[5];
+    strncpy(bit4_1,imm+8,4);
+    bit4_1[4] = '\0';
+
+    fprintf(output,"%c%s%s%s%s%s%c%s\n",
+        bit12,
+        bit10_5,
+        rs2->encoding,
+        rs1->encoding,
+        Instruct->funct3,
+        bit4_1,
+        bit11,
+        Instruct->opcode
+    );
+}
        else { 
            printf("ERROR!");
        }
