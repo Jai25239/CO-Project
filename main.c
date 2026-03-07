@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-//Define the instructions with all of it's properties.
+//Defined seperate structs to store the instruction, register and their properties, encoding in a structured way.
 typedef struct {
     char name[10];    
     char funct7[8];   
@@ -16,13 +15,29 @@ typedef struct {
     char opcode[8];
 }STypeInstruction;
 
+typedef struct{
+    char name[6];
+    char funct3[4];
+    char opcode[8];
+}ITypeInstruction;
+
+typedef struct{
+    char name[6];
+    char opcode[8];
+}UTypeInstruction;
+
+typedef struct{
+    char name[6];
+    char opcode[8];
+}JTypeInstruction;
+
 // For registers
 typedef struct {
     char name[6];     
     char encoding[6]; 
-} Register;
+}Register;
 
-//Store the data, in the same order we created its properties, for example, registers mein pehle "name", fir "encoding"
+//Storing the register and their encoding, in the same order we created its properties, for example, registers mein pehle "name", fir "encoding"
 Register RegList[] = {
         {"zero", "00000"},
         {"ra", "00001"},
@@ -58,8 +73,29 @@ STypeInstruction Stype[] = {
     };
     int Ssize = sizeof(Stype)/sizeof(STypeInstruction);      //Number of S type instructions
 
+    //"name","funct3","opcode"
+    ITypeInstruction Itype[]={
+        {"lw","010","0000011"},
+        {"addi","000","0010011"},
+        {"sltiu","011","0010011"},
+        {"jalr","000","1100111"}
+    };
+    int Isize = sizeof(Itype)/sizeof(ITypeInstruction);     //Number of I type instructions.
 
-//immediate will be in decimal, so a decimal to binary convertor.
+    //"name","opcode"
+    UTypeInstruction Utype[]={
+        {"auipc","0010111"},
+        {"lui","0110111"}
+    };
+    int Usize = sizeof(Utype)/sizeof(UTypeInstruction);     //Number of U type instructions.
+
+    //"name","opcode"
+    JTypeInstruction Jtype[]={
+        {"jal","1101111"}
+    };
+    int Jsize = sizeof(Jtype)/sizeof(JTypeInstruction);
+
+//immediate will be in decimal, so this function converts decimal to binary (also do 2's complement for negetive decimals)
 char* imm_to_bin(int num, int bits, char* result){  //num: What you want to convert. bits:Into how many bits. result: Where you want to store it.
     if (num <0){
         num = num + (1<<bits);
@@ -72,7 +108,7 @@ char* imm_to_bin(int num, int bits, char* result){  //num: What you want to conv
     return result;
 }
 
-//Finds the register with name "name" and returns that register.
+//Finds the register with name "name" and returns that address where that register and its encoding is stored, otherwise gives NULL.
 Register* find_reg(char* name, Register* Reg_list){
     for (int i = 0; i<32; i++){
         if (strcmp(Reg_list[i].name, name) == 0){
@@ -82,7 +118,7 @@ Register* find_reg(char* name, Register* Reg_list){
     return NULL;
 }
 
-//Finds the Rtype Instruction and returns that instruction
+//Finds the Rtype Instruction and returns that address where that instruction is stored, otherwise gives NULL.
 RTypeInstruction* find_Rinst(char* name, RTypeInstruction* Rlist, int size){
     for (int i = 0; i<size; i++){
         if (strcmp(Rlist[i].name, name) == 0){
@@ -92,6 +128,7 @@ RTypeInstruction* find_Rinst(char* name, RTypeInstruction* Rlist, int size){
     return NULL;
 }
 
+//Finds the Stype Instruction and returns that address where that instruction is stored, otherwise gives NULL.
 STypeInstruction* find_Sinst(char* name, STypeInstruction* Slist, int size){
     for (int i = 0; i<size; i++){
         if (strcmp(Slist[i].name, name) == 0){
@@ -101,19 +138,56 @@ STypeInstruction* find_Sinst(char* name, STypeInstruction* Slist, int size){
     return NULL;
 }
 
+//Finds the Itype Instruction and returns that address where that instruction is stored, otherwise gives NULL.
+ITypeInstruction* find_Iinst(char* name, ITypeInstruction* Ilist,int size){
+    for(int i = 0; i<size; i++){
+        if(strcmp(Ilist[i].name,name)==0){
+            return &Ilist[i];
+        }
+    }
+    return NULL;
+}
+//Finds the Utype Instruction and returns that address where that instruction is stored, otherwise gives NULL.
+UTypeInstruction* find_Uinst(char* name, UTypeInstruction* Ulist, int size){
+    for(int i = 0; i< size; i++){
+        if(strcmp(Ulist[i].name,name)==0){
+            return &Ulist[i];
+        }
+    }
+    return NULL;
+}
+//Finds the Jtype Instruction and returns that address where that instruction is stored, otherwise gives NULL.
+JTypeInstruction* find_Jinst(char* name, JTypeInstruction* Jlist, int size){
+    for(int i = 0; i<size; i++){
+        if(strcmp(Jlist[i].name,name)==0){
+            return &Jlist[i];
+        }
+    }
+    return NULL;
+}
 
-//Master FIND INSTRUCTION function
-char find_inst(char* name,RTypeInstruction* Rlist, int Rsize, STypeInstruction* Slist, int Ssize){
+//Master FIND INSTRUCTION function (find the type of instruction.)
+char find_inst(char* name,RTypeInstruction* Rlist, int Rsize, STypeInstruction* Slist, int Ssize,ITypeInstruction* Ilist,int Isize, UTypeInstruction* Ulist, int Usize, JTypeInstruction* Jlist, int Jsize){
     if (find_Rinst(name, Rlist, Rsize) != NULL){
         return 'R';
     }
     if (find_Sinst(name, Slist, Ssize) != NULL){
         return 'S';
     }
+    if(find_Iinst(name,Ilist,Isize) != NULL){
+        return 'I';
+    }
+    if(find_Uinst(name,Ulist,Usize) != NULL){
+        return 'U';
+    }
+    if(find_Jinst(name,Jlist,Jsize) != NULL){
+        return 'J';
+    }
     return '?';
 }
 
-
+//This is the responsible function which breaks assembly written line into tokens one by one taking lines from the file.
+//After breaking into tokens we find the encoding of opcode, funct3 or funct7 from the previous arrays and prints them into the sequence, which is encoding of the given assembly code. 
 void encoder(FILE* input, FILE* output){
     char line[100];
 
@@ -141,7 +215,7 @@ void encoder(FILE* input, FILE* output){
         //tokens = {"sw", "t0", "10", "t1"}
 
         //RTYPE INSTRUNCTION ENCODING
-        if (find_inst(tokens[0], Rtype, Rsize, Stype, Ssize) == 'R') {
+        if (find_inst(tokens[0], Rtype, Rsize, Stype, Ssize, Itype, Isize, Utype, Usize, Jtype, Jsize) == 'R') {
             RTypeInstruction* Instruct = find_Rinst(tokens[0], Rtype, Rsize);
             Register* rd = find_reg(tokens[1], RegList);
             Register* r1 = find_reg(tokens[2], RegList);
@@ -156,7 +230,7 @@ void encoder(FILE* input, FILE* output){
         }
 
         //STYPE INSTRUNCTION ENCODING
-        else if (find_inst(tokens[0], Rtype, Rsize, Stype, Ssize) == 'S'){
+        else if (find_inst(tokens[0], Rtype, Rsize, Stype, Ssize, Itype, Isize, Utype, Usize) == 'S'){
             STypeInstruction* Instruct = find_Sinst(tokens[0], Stype, Ssize);
             Register* rs2 = find_reg(tokens[1], RegList);
             Register* rs1 = find_reg(tokens[3], RegList);
@@ -180,13 +254,73 @@ void encoder(FILE* input, FILE* output){
                 fprintf(output, "%s%s%s%s%s%s\n", upper, rs2->encoding, rs1->encoding, Instruct->funct3, lower, Instruct->opcode);
             }
         } 
+
+        //I Type Instruction Encoding.
+        else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize)=='I'){
+            ITypeInstruction* Instruct = find_Iinst(tokens[0],Itype,Isize);
+            Register* rd = find_reg(tokens[1],RegList);
+            Register* rs1 = NULL;
+            char imm[13];
+            if(strcmp(Instruct->name,"lw")==0){
+                rs1 = find_reg(tokens[3],RegList);
+                imm_to_bin(atoi(tokens[2]),12,imm);
+            }
+            else{
+                rs1 = find_reg(tokens[2],RegList);
+                imm_to_bin(atoi(tokens[3]),12,imm);
+            }
+            if(rd == NULL || rs1 == NULL){
+                printf("register name not found\n");
+                return;
+            }
+            else{
+                fprintf(output, "%s%s%s%s%s\n",imm, rs1->encoding, Instruct->funct3, rd->encoding, Instruct->opcode);
+            }
+        }
+
+        //U Type Instruction Encoding.
+        else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize)=='U'){
+            UTypeInstruction* Instruct = find_Uinst(tokens[0],Utype,Usize);
+            Register* rd = find_reg(tokens[1],RegList);
+            char imm[21];
+            imm_to_bin(atoi(tokens[2]),20,imm);
+            if(rd == NULL){
+                printf("register not found\n");
+                return;
+            }
+            else{
+                fprintf(output,"%s%s%s\n",imm,rd->encoding,Instruct->opcode);
+            }
+        }
         
         else {
             printf("ERROR!");
         }
     }
 }
+       //J Type Instruction Encoding
+       else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize,Jtype,Jsize)=='J'){
+           JTypeInstruction* Instruct = find_Jinst(tokens[0],Jtype,Jsize);
+           Register* rd = find_reg(tokens[1],RegList);
+           char imm[21];
+           imm_to_bin(atoi(tokens[2]),20,imm);
+           if(rd == NULL){
+               printf("register not found\n");
+               return;
+           }
+           else{
+               fprintf(output,"%s%s%s\n",imm,rd->encoding,Instruct->opcode);
+           }
+       }
 
+       else { 
+           printf("ERROR!");
+       }
+    }
+}
+  
+
+//This is the main function which takes assembly file and address of output file in which binary encoding has to be written.
 int main(int argc, char* argv[]){        //for accessing input and output files in the command termial. First compile, then run .\main.exe input.txt output.txt 
     FILE* input = fopen(argv[1], "r");
     FILE* output = fopen(argv[2], "w");
