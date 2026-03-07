@@ -276,10 +276,10 @@ void Store_Label(FILE* input){
 //After breaking into tokens we find the encoding of opcode, funct3 or funct7 from the previous arrays and prints them into the sequence, which is encoding of the given assembly code. 
 void encoder(FILE* input, FILE* output){
     char line[100];
+    int PC = 0;
 
     while(fgets(line, 100, input) != NULL){   //Reads one line at a time. Do everything INSIDE THIS LOOP, AFTER PARSING!
         line[strcspn(line, "\r\n")] = '\0';
-        int PC = 0;
         //SKIP EMPTY LINES
         if (strlen(line) == 0){
             continue;
