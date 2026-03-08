@@ -306,6 +306,7 @@ void encoder(FILE* input, FILE* output){
         //Detect Virtual Halt
         if (strcmp(tokens[0], "beq") ==0 && strcmp(tokens[1], "zero")==0 && strcmp(tokens[2], "zero")==0 && strcmp(tokens[3], "0")==0){
             HALT = 1;
+            fprintf(output, "00000000000000000000000001100011");
             continue;
         }
 
@@ -315,7 +316,7 @@ void encoder(FILE* input, FILE* output){
             return;
         }
         //For skipping code lines such as Label:
-        if (count = 1 && find_label(tokens[0]) != NULL){
+        if (count == 1 && find_label(tokens[0]) != NULL){
             line_no++;
             continue;
         }
@@ -349,9 +350,9 @@ void encoder(FILE* input, FILE* output){
             else {
                 fprintf(output, "%s%s%s%s%s%s\n", Instruct->funct7, r2->encoding, r1->encoding, Instruct->funct3, rd->encoding, Instruct->opcode);
                 line_no++;
+                PC = PC+4;
                 continue;
             }
-            PC = PC+4;
         }
 
         //STYPE INSTRUNCTION ENCODING
@@ -359,7 +360,7 @@ void encoder(FILE* input, FILE* output){
             STypeInstruction* Instruct = find_Sinst(tokens[0], Stype, Ssize);
             Register* rs2 = find_reg(tokens[1], RegList);
             Register* rs1 = find_reg(tokens[3], RegList);
-            char imm[12];
+            char imm[13];
             
             imm_to_bin(atoi(tokens[2]), 12, imm);
             //UPPER IMM
@@ -384,9 +385,9 @@ void encoder(FILE* input, FILE* output){
             else{
                 fprintf(output, "%s%s%s%s%s%s\n", upper, rs2->encoding, rs1->encoding, Instruct->funct3, lower, Instruct->opcode);
                 line_no++;
+                PC = PC+4;
                 continue;
             }
-            PC = PC+4;
         } 
 
         //I Type Instruction Encoding.
@@ -418,9 +419,9 @@ void encoder(FILE* input, FILE* output){
             else{
                 fprintf(output, "%s%s%s%s%s\n",imm, rs1->encoding, Instruct->funct3, rd->encoding, Instruct->opcode);
                 line_no++;
+                PC = PC+4;
                 continue;
             }
-            PC = PC+4;
         }
 
         //U Type Instruction Encoding.
@@ -436,9 +437,9 @@ void encoder(FILE* input, FILE* output){
             else{
                 fprintf(output,"%s%s%s\n",imm,rd->encoding,Instruct->opcode);
                 line_no++;
+                PC = PC+4;
                 continue;
             }
-            PC = PC+4;
         }
         
        //J Type Instruction Encoding
@@ -461,8 +462,8 @@ void encoder(FILE* input, FILE* output){
             else{
                 fprintf(output,"%s%s%s\n",imm,rd->encoding,Instruct->opcode);
                 line_no++;
+                PC = PC+4;
            }
-           PC = PC+4;
        }
 
       //B Type Instruction Encoding.
@@ -486,9 +487,9 @@ void encoder(FILE* input, FILE* output){
                 fprintf(output, "Label not found.\n");
                 return;
             }
-            int offset = PC - label->address;
+            int offset = label->address - PC;
 
-            char imm[12];
+            char imm[13];
             imm_to_bin(offset,12,imm);
 
             char upper[8];  // imm[12|10:5]
@@ -518,6 +519,9 @@ void encoder(FILE* input, FILE* output){
             printf("ERROR!");
        }
     }
+    if (HALT == 0){
+        printf("Error: Missing virtual halt instruction\n");
+    }
 }
 
 //This is the main function which takes assembly file and address of output file in which binary encoding has to be written.
@@ -527,5 +531,8 @@ int main(int argc, char* argv[]){        //for accessing input and output files 
     Store_Label(input);
     rewind(input);      
     encoder(input, output);
+
+    fclose(input);
+    fclose(output);
     return 0;
 }
