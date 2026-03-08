@@ -234,6 +234,7 @@ char find_inst(char* name,RTypeInstruction* Rlist, int Rsize, STypeInstruction* 
 //After breaking into tokens we find the encoding of opcode, funct3 or funct7 from the previous arrays and prints them into the sequence, which is encoding of the given assembly code. 
 void encoder(FILE* input, FILE* output){
     char line[100];
+    int line_no = 1;
 
     while(fgets(line, 100, input) != NULL){   //Reads one line at a time. Do everything INSIDE THIS LOOP, AFTER PARSING!
         line[strcspn(line, "\r\n")] = '\0';
@@ -266,10 +267,21 @@ void encoder(FILE* input, FILE* output){
             Register* r2 = find_reg(tokens[3], RegList);
             
             if (Instruct == NULL || rd == NULL || r1 == NULL || r2 == NULL){
-                printf("Incorrect instruction format.\nFor Rtype intruction, the format is: Instruction Name rd, r1, r2");
+                if(rd == NULL){
+                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[1]);
+                }
+                if(r1 == NULL){
+                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[2]);
+                }
+                if(r2 == NULL){
+                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[3]);
+                }                
                 return;
-            } else {
+            } 
+            else {
                 fprintf(output, "%s%s%s%s%s%s\n", Instruct->funct7, r2->encoding, r1->encoding, Instruct->funct3, rd->encoding, Instruct->opcode);
+                line_no +=1;
+                continue;
             }
         }
 
@@ -292,10 +304,18 @@ void encoder(FILE* input, FILE* output){
             lower[5] = '\0';
 
             if (Instruct == NULL || rs2 == NULL || rs1 == NULL){
-                printf("Incorrect instruction format.\nFor Stype intruction, the format is: Instruction Name rs2, imm(rs1)");
+                if(rs1 == NULL){
+                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[3]);
+                }
+                if (rs2 == NULL){
+                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[1]);
+                }     
                 return;
-            } else{
+            } 
+            else{
                 fprintf(output, "%s%s%s%s%s%s\n", upper, rs2->encoding, rs1->encoding, Instruct->funct3, lower, Instruct->opcode);
+                line_no +=1;
+                continue;
             }
         } 
 
@@ -308,17 +328,27 @@ void encoder(FILE* input, FILE* output){
             if(strcmp(Instruct->name,"lw")==0){
                 rs1 = find_reg(tokens[3],RegList);
                 imm_to_bin(atoi(tokens[2]),12,imm);
+                if(rs1 ==NULL){
+                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[3]);
+                }
             }
             else{
                 rs1 = find_reg(tokens[2],RegList);
                 imm_to_bin(atoi(tokens[3]),12,imm);
+                if(rs1 ==NULL){
+                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[2]);
+                }
             }
             if(rd == NULL || rs1 == NULL){
-                printf("register name not found\n");
+                if(rd ==NULL){
+                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[1]);
+                }
                 return;
             }
             else{
                 fprintf(output, "%s%s%s%s%s\n",imm, rs1->encoding, Instruct->funct3, rd->encoding, Instruct->opcode);
+                line_no +=1;
+                continue;
             }
         }
 
@@ -329,11 +359,13 @@ void encoder(FILE* input, FILE* output){
             char imm[21];
             imm_to_bin(atoi(tokens[2]),20,imm);
             if(rd == NULL){
-                printf("register not found\n");
+                printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[1]);
                 return;
             }
             else{
                 fprintf(output,"%s%s%s\n",imm,rd->encoding,Instruct->opcode);
+                line_no +=1;
+                continue;
             }
         }
         
@@ -344,11 +376,13 @@ void encoder(FILE* input, FILE* output){
            char imm[21];
            imm_to_bin(atoi(tokens[2]),20,imm);
            if(rd == NULL){
-               printf("register not found\n");
+               printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[1]);
                return;
            }
            else{
                fprintf(output,"%s%s%s\n",imm,rd->encoding,Instruct->opcode);
+               line_no +=1;
+                continue;
            }
        }
       //U Type Instruction Encoding.
@@ -358,11 +392,20 @@ void encoder(FILE* input, FILE* output){
 
     Register* rs1 = find_reg(tokens[1],RegList);
     Register* rs2 = find_reg(tokens[2],RegList);
+    if (rs1 == NULL || rs2 == NULL){
+        if(rs1 == NULL){
+            printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[2]);
+        }
+        if(rs2 == NULL){
+            printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[3]);
+        }
+        return;
+    }
 
     int offset = atoi(tokens[3]);
 
     if(offset % 2 != 0){
-        printf("Branch offset must be 2-byte aligned\n");
+        printf("Error:\nIn line no. %d Branch offset must be 2-byte aligned\n",line_no);
         return;
     }
 
@@ -392,10 +435,20 @@ void encoder(FILE* input, FILE* output){
         bit11,
         Instruct->opcode
     );
+    line_no +=1;
+    continue;
 }
+        int len = strlen(tokens[0]);
+        tokens[0][len - 1] = '\0';
+        if(find_label(tokens[0])!=NULL){
+            line_no +=1;
+            continue;
+        }
+
        else { 
-           printf("ERROR!");
+           printf("ERROR! - In line no.  %d ,%s is not a defined instruction\n",line_no,tokens[0]);
        }
+       line_no +=1;
     }
 }
   
