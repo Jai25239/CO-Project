@@ -236,6 +236,7 @@ char find_inst(char* name,RTypeInstruction* Rlist, int Rsize, STypeInstruction* 
 void Store_Label(FILE* input){
     char line[100];
     int PC = 0;
+    char last_line[100] = ""; //for storing last line to check for virtual halt
 
     while(fgets(line, 100, input) != NULL){
         line[strcspn(line, "\r\n")] = '\0';
@@ -243,6 +244,9 @@ void Store_Label(FILE* input){
         if (strlen(line) == 0){
             continue;
         }
+
+        char temp[100];
+        strcpy(temp, line);  // save copy in temp before converting into tokens
 
         char* tokens[10];
         int count = 0;
@@ -269,8 +273,21 @@ void Store_Label(FILE* input){
             continue;
         }
 
+        strcpy(last_line, temp);  // update last instruction line
         PC += 4;
     }
+    // tokenize last_line to check properly
+    char* tokens[10];
+    int count = 0;
+    char* elements = strtok(last_line, " ,()");
+    while (elements != NULL){
+        tokens[count] = elements;
+        count++;
+        elements = strtok(NULL, " ,()");
+    }
+
+    //To check if the last line is a virtual halt or not
+    int is_halt = strcmp(tokens[0], "beq") == 0 && strcmp(tokens[1], "zero") == 0 && strcmp(tokens[2], "zero") == 0 && (strcmp(tokens[3], "0") == 0 || strcmp(tokens[3], "0x00000000") == 0);
 }
 
 //This is the responsible function which breaks assembly written line into tokens one by one taking lines from the file.
@@ -303,18 +320,6 @@ void encoder(FILE* input, FILE* output){
         //Another example: Given line = sw t0, 10(t1)
         //tokens = {"sw", "t0", "10", "t1"}
 
-        //Detect Virtual Halt
-        if (strcmp(tokens[0], "beq") ==0 && strcmp(tokens[1], "zero")==0 && strcmp(tokens[2], "zero")==0 && strcmp(tokens[3], "0")==0){
-            HALT = 1;
-            fprintf(output, "00000000000000000000000001100011");
-            continue;
-        }
-
-        //If Virtual Halt exist and next instruction it not label
-        if (HALT == 1 && find_label(tokens[0]) == NULL){
-            printf("CODE WRITTEN AFTER VIRTUAL HALT");
-            return;
-        }
         //For skipping code lines such as Label:
         if (count == 1 && find_label(tokens[0]) != NULL){
             line_no++;
@@ -326,6 +331,13 @@ void encoder(FILE* input, FILE* output){
             for (int i = 0; i<count-1; i++){
                 tokens[i] = tokens[i+1];
             }
+        }
+
+        //Detect Virtual Halt
+        if (strcmp(tokens[0], "beq") ==0 && strcmp(tokens[1], "zero")==0 && strcmp(tokens[2], "zero")==0 && (strcmp(tokens[3], "0")==0 || strcmp(tokens[3], "0x00000000") == 0)){
+            HALT = 1;
+            fprintf(output, "00000000000000000000000001100011\n");
+            continue;
         }
 
         //RTYPE INSTRUNCTION ENCODING
