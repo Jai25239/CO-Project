@@ -279,6 +279,7 @@ void encoder(FILE* input, FILE* output){
     char line[100];
     int PC = 0;
     int line_no = 1;
+    int HALT = 0;
 
     while(fgets(line, 100, input) != NULL){   //Reads one line at a time. Do everything INSIDE THIS LOOP, AFTER PARSING!
         line[strcspn(line, "\r\n")] = '\0';
@@ -302,6 +303,17 @@ void encoder(FILE* input, FILE* output){
         //Another example: Given line = sw t0, 10(t1)
         //tokens = {"sw", "t0", "10", "t1"}
 
+        //Detect Virtual Halt
+        if (strcmp(tokens[0], "beq") ==0 && strcmp(tokens[1], "zero")==0 && strcmp(tokens[2], "zero")==0 && strcmp(tokens[3], "0")==0){
+            HALT = 1;
+            continue;
+        }
+
+        //If Virtual Halt exist and next instruction it not label
+        if (HALT = 1 && find_label(tokens[0] == NULL)){
+            printf("CODE WRITTEN AFTER VIRTUAL HALT");
+            return;
+        }
         //For skipping code lines such as Label:
         if (count = 1 && find_label(tokens[0]) != NULL){
             line_no++;
