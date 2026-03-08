@@ -288,17 +288,29 @@ void encoder(FILE* input, FILE* output){
         //Parsing, ie splitting the line into tokens.
         char* tokens[10];
         int count = 0;
-        char* elements = strtok(line, " ,()");
+        char* elements = strtok(line, " :,()");
         while (elements != NULL){
             tokens[count] = elements;
             count++;
-            elements = strtok(NULL, " ,()");
+            elements = strtok(NULL, " :,()");
         }
 
         //Example to understand what happened above: Given line = add t0, zero, t0
         //Tokens will become: tokens = {"add", "t0", "zero", "t0"}, very easy to handle now.
         //Another example: Given line = sw t0, 10(t1)
         //tokens = {"sw", "t0", "10", "t1"}
+
+        //For skipping code lines such as Label:
+        if (count = 1 && find_label(tokens[0]) != NULL){
+            continue;
+        }
+
+        //For taking care of code lines such as Label: instrunction. By shifting the tokens array left by 1 element.
+        if (find_label(tokens[0]) != NULL){
+            for (int i = 0; i<count-1; i++){
+                tokens[i] = tokens[i+1];
+            }
+        }
 
         //RTYPE INSTRUNCTION ENCODING
         if (find_inst(tokens[0], Rtype, Rsize, Stype, Ssize, Itype, Isize, Utype, Usize, Jtype, Jsize,Btype,Bsize) == 'R') {
@@ -443,9 +455,6 @@ void encoder(FILE* input, FILE* output){
 
             fprintf(output,"%s%s%s%s%s%s\n", upper, rs2->encoding, rs1->encoding, Instruct->funct3, lower, Instruct->opcode);
             PC = PC+4;
-        }
-        else if (0<count<=1){
-            continue;
         }
         else { 
             fprintf(output, "Error in line %d", PC/4);
