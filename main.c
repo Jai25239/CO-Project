@@ -278,6 +278,7 @@ void Store_Label(FILE* input){
 void encoder(FILE* input, FILE* output){
     char line[100];
     int PC = 0;
+    int line_no = 1;
 
     while(fgets(line, 100, input) != NULL){   //Reads one line at a time. Do everything INSIDE THIS LOOP, AFTER PARSING!
         line[strcspn(line, "\r\n")] = '\0';
@@ -303,6 +304,7 @@ void encoder(FILE* input, FILE* output){
 
         //For skipping code lines such as Label:
         if (count = 1 && find_label(tokens[0]) != NULL){
+            line_no++;
             continue;
         }
 
@@ -321,10 +323,21 @@ void encoder(FILE* input, FILE* output){
             Register* r2 = find_reg(tokens[3], RegList);
             
             if (Instruct == NULL || rd == NULL || r1 == NULL || r2 == NULL){
-                printf("Incorrect instruction format.\nFor Rtype intruction, the format is: Instruction Name rd, r1, r2");
+                if(rd == NULL){
+                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[1]);
+                }
+                if(r1 == NULL){
+                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[2]);
+                }
+                if(r2 == NULL){
+                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[3]);
+                }                
                 return;
-            } else {
+            } 
+            else {
                 fprintf(output, "%s%s%s%s%s%s\n", Instruct->funct7, r2->encoding, r1->encoding, Instruct->funct3, rd->encoding, Instruct->opcode);
+                line_no++;
+                continue;
             }
             PC = PC+4;
         }
@@ -348,10 +361,18 @@ void encoder(FILE* input, FILE* output){
             lower[5] = '\0';
 
             if (Instruct == NULL || rs2 == NULL || rs1 == NULL){
-                printf("Incorrect instruction format.\nFor Stype intruction, the format is: Instruction Name rs2, imm(rs1)");
+                if(rs1 == NULL){
+                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[3]);
+                }
+                if (rs2 == NULL){
+                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[1]);
+                }     
                 return;
-            } else{
+            } 
+            else{
                 fprintf(output, "%s%s%s%s%s%s\n", upper, rs2->encoding, rs1->encoding, Instruct->funct3, lower, Instruct->opcode);
+                line_no++;
+                continue;
             }
             PC = PC+4;
         } 
@@ -365,17 +386,27 @@ void encoder(FILE* input, FILE* output){
             if(strcmp(Instruct->name,"lw")==0){
                 rs1 = find_reg(tokens[3],RegList);
                 imm_to_bin(atoi(tokens[2]),12,imm);
+                if(rs1 ==NULL){
+                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[3]);
+                }
             }
             else{
                 rs1 = find_reg(tokens[2],RegList);
                 imm_to_bin(atoi(tokens[3]),12,imm);
+                if(rs1 ==NULL){
+                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[2]);
+                }
             }
             if(rd == NULL || rs1 == NULL){
-                printf("register name not found, I type, %d line\n", PC/4);
+                if(rd ==NULL){
+                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[1]);
+                }
                 return;
             }
             else{
                 fprintf(output, "%s%s%s%s%s\n",imm, rs1->encoding, Instruct->funct3, rd->encoding, Instruct->opcode);
+                line_no++;
+                continue;
             }
             PC = PC+4;
         }
@@ -387,11 +418,13 @@ void encoder(FILE* input, FILE* output){
             char imm[21];
             imm_to_bin(atoi(tokens[2]),20,imm);
             if(rd == NULL){
-                printf("register not found, U type\n");
+                printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[1]);
                 return;
             }
             else{
                 fprintf(output,"%s%s%s\n",imm,rd->encoding,Instruct->opcode);
+                line_no++;
+                continue;
             }
             PC = PC+4;
         }
@@ -415,6 +448,7 @@ void encoder(FILE* input, FILE* output){
            }
             else{
                 fprintf(output,"%s%s%s\n",imm,rd->encoding,Instruct->opcode);
+                line_no++;
            }
            PC = PC+4;
        }
@@ -425,7 +459,16 @@ void encoder(FILE* input, FILE* output){
             Register* rs1 = find_reg(tokens[1],RegList);
             Register* rs2 = find_reg(tokens[2],RegList);
             Label* label = find_label(tokens[3]);
-
+            
+            if (rs1 == NULL || rs2 == NULL){
+                if(rs1 == NULL){
+                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[2]);
+                }
+                if(rs2 == NULL){
+                printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[3]);
+                }
+                return;
+            }
             if (label == NULL){
                 printf("Error: label '%s' not found\n", tokens[3]);
                 fprintf(output, "Label not found.\n");
@@ -455,6 +498,7 @@ void encoder(FILE* input, FILE* output){
             lower[5] = '\0';
 
             fprintf(output,"%s%s%s%s%s%s\n", upper, rs2->encoding, rs1->encoding, Instruct->funct3, lower, Instruct->opcode);
+            line_no++;
             PC = PC+4;
         }
         else { 
