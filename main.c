@@ -310,7 +310,7 @@ void encoder(FILE* input, FILE* output){
         }
 
         //If Virtual Halt exist and next instruction it not label
-        if (HALT = 1 && find_label(tokens[0]) == NULL){
+        if (HALT == 1 && find_label(tokens[0]) == NULL){
             printf("CODE WRITTEN AFTER VIRTUAL HALT");
             return;
         }
