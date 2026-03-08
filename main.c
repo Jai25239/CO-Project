@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+//For storing Labels
 typedef struct {
     char name[50];
     int address;
