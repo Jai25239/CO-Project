@@ -472,7 +472,6 @@ void encoder(FILE* input, FILE* output){
             }
                 imm_to_bin(label->address,20,imm);
 
-<<<<<<< HEAD
             int offset = label->address - PC;
             char imm[21];
             imm_to_bin(offset, 20, imm);
@@ -505,13 +504,6 @@ void encoder(FILE* input, FILE* output){
            }
             else{
                 fprintf(output,"%s%s%s\n",immediate_broken,rd->encoding,Instruct->opcode);
-=======
-           }
-           else{
-            imm_to_bin(atoi(tokens[2]),20,imm);
-           }
-            fprintf(output,"%s%s%s\n",imm,rd->encoding,Instruct->opcode);
->>>>>>> f35b939502af711981fb311a3558ed3d7692fe20
                 line_no++;
                 PC = PC+4;
        }
