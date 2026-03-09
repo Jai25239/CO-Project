@@ -282,15 +282,23 @@ void Store_Label(FILE* input){
     char* tokens[10];
     int count = 0;
     char* saveptr2;
-    char* elements = strtok_r(last_line, " ,()", &saveptr2);
+    char* elements = strtok_r(last_line, " :,()", &saveptr2);
     while (elements != NULL){
         tokens[count] = elements;
         count++;
-        elements = strtok_r(NULL, " ,()", &saveptr2);
+        elements = strtok_r(NULL, " :,()", &saveptr2);
+    }
+
+    if(find_label(tokens[0]) != NULL){
+        for(int i = 0; i < count-1; i++){
+            tokens[i] = tokens[i+1];
+        }
+        count--;
     }
 
     //To check if the last line is a virtual halt or not
     int is_halt = strcmp(tokens[0], "beq") == 0 && strcmp(tokens[1], "zero") == 0 && strcmp(tokens[2], "zero") == 0 && (strcmp(tokens[3], "0") == 0 || strcmp(tokens[3], "0x00000000") == 0);
+    
     if (!is_halt){
     printf("Error: last instruction must be virtual halt\n");
     }
