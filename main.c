@@ -531,7 +531,8 @@ void encoder(FILE* input, FILE* output){
         }
         else { 
             fprintf(output, "Error in line %d", PC/4);
-            printf("ERROR!");
+            printf("ERROR! -In line no.  %d the instruction  %s is not defined.\n",line_no,tokens[0]);
+            return;
        }
     }
     if (HALT == 0){
