@@ -453,7 +453,7 @@ void encoder(FILE* input, FILE* output){
                 continue;
             }
         }
-        
+
        //J Type Instruction Encoding
         else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize,Jtype,Jsize,Btype,Bsize)=='J'){
             JTypeInstruction* Instruct = find_Jinst(tokens[0],Jtype,Jsize);
@@ -462,15 +462,13 @@ void encoder(FILE* input, FILE* output){
                 printf("register not found, J type\n");
                 return;
             }
-            char imm[21];
-           if(find_label(tokens[2])){
+            if(find_label(tokens[2])){
             Label* label = find_label(tokens[2]);
             if (label == NULL){
                 printf("Error: label '%s' not found\n", tokens[2]);
                 fprintf(output, "Label not found.\n");
                 return;
             }
-                imm_to_bin(label->address,20,imm);
 
             int offset = label->address - PC;
             char imm[21];
@@ -498,6 +496,7 @@ void encoder(FILE* input, FILE* output){
             immediate_broken[18] = imm[7];   // bit 13
             immediate_broken[19] = imm[8];   // bit 12
             immediate_broken[20] = '\0';
+
             if(rd == NULL){
                 printf("register not found, J type\n");
                 return;
@@ -506,10 +505,11 @@ void encoder(FILE* input, FILE* output){
                 fprintf(output,"%s%s%s\n",immediate_broken,rd->encoding,Instruct->opcode);
                 line_no++;
                 PC = PC+4;
-       }
-
+            }
+            }
+        }
       //B Type Instruction Encoding.
-      else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize,Jtype,Jsize,Btype,Bsize)=='B'){
+        else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize,Jtype,Jsize,Btype,Bsize)=='B'){
             BTypeInstruction* Instruct = find_Binst(tokens[0],Btype,Bsize);
             Register* rs1 = find_reg(tokens[1],RegList);
             Register* rs2 = find_reg(tokens[2],RegList);
@@ -568,7 +568,7 @@ void encoder(FILE* input, FILE* output){
 }
 
 //This is the main function which takes assembly file and address of output file in which binary encoding has to be written.
-int main(int argc, char* argv[]){        //for accessing input and output files in the command termial. First compile, then run .\main.exe input.txt output.txt 
+int main(int argc, char* argv[]){      //for accessing input and output files in the command termial. First compile, then run .\main.exe input.txt output.txt 
     FILE* input = fopen(argv[1], "r");
     FILE* output = fopen(argv[2], "w");
     Store_Label(input);
