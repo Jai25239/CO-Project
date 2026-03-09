@@ -455,16 +455,24 @@ void encoder(FILE* input, FILE* output){
         }
         
        //J Type Instruction Encoding
-       else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize,Jtype,Jsize,Btype,Bsize)=='J'){
-           JTypeInstruction* Instruct = find_Jinst(tokens[0],Jtype,Jsize);
-           Register* rd = find_reg(tokens[1],RegList);
-           Label* label = find_label(tokens[2]);
-           if (label == NULL){
+        else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize,Jtype,Jsize,Btype,Bsize)=='J'){
+            JTypeInstruction* Instruct = find_Jinst(tokens[0],Jtype,Jsize);
+            Register* rd = find_reg(tokens[1],RegList);           
+            if(rd == NULL){
+                printf("register not found, J type\n");
+                return;
+            }
+            char imm[21];
+           if(find_label(tokens[2])){
+            Label* label = find_label(tokens[2]);
+            if (label == NULL){
                 printf("Error: label '%s' not found\n", tokens[2]);
                 fprintf(output, "Label not found.\n");
                 return;
             }
+                imm_to_bin(label->address,20,imm);
 
+<<<<<<< HEAD
             int offset = label->address - PC;
             char imm[21];
             imm_to_bin(offset, 20, imm);
@@ -497,9 +505,15 @@ void encoder(FILE* input, FILE* output){
            }
             else{
                 fprintf(output,"%s%s%s\n",immediate_broken,rd->encoding,Instruct->opcode);
+=======
+           }
+           else{
+            imm_to_bin(atoi(tokens[2]),20,imm);
+           }
+            fprintf(output,"%s%s%s\n",imm,rd->encoding,Instruct->opcode);
+>>>>>>> f35b939502af711981fb311a3558ed3d7692fe20
                 line_no++;
                 PC = PC+4;
-           }
        }
 
       //B Type Instruction Encoding.
@@ -552,7 +566,8 @@ void encoder(FILE* input, FILE* output){
         }
         else { 
             fprintf(output, "Error in line %d", PC/4);
-            printf("ERROR!");
+            printf("ERROR! -In line no.  %d the instruction  %s is not defined.\n",line_no,tokens[0]);
+            return;
        }
     }
     if (HALT == 0){
