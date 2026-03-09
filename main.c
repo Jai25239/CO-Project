@@ -276,8 +276,8 @@ void Store_Label(FILE* input){
 
         PC += 4;
     }
-}
     
+}
 
 //This is the responsible function which breaks assembly written line into tokens one by one taking lines from the file.
 //After breaking into tokens we find the encoding of opcode, funct3 or funct7 from the previous arrays and prints them into the sequence, which is encoding of the given assembly code. 
@@ -329,6 +329,8 @@ void encoder(FILE* input, FILE* output){
         if (strcmp(tokens[0], "beq") ==0 && strcmp(tokens[1], "zero")==0 && strcmp(tokens[2], "zero")==0 && (strcmp(tokens[3], "0")==0 || strcmp(tokens[3], "0x00000000") == 0)){
             HALT = 1;
             fprintf(output, "00000000000000000000000001100011\n");
+            line_no++;
+            PC = PC + 4;
             continue;
         }
 
@@ -462,16 +464,17 @@ void encoder(FILE* input, FILE* output){
                 fprintf(stderr, "register not found, J type\n");
                 exit(1);
             }
-            if(find_label(tokens[2])){
+            
             Label* label = find_label(tokens[2]);
-            if (label == NULL){
-                fprintf(stderr, "Error: label '%s' not found\n", tokens[2]);
-                exit(1);
+            int offset;
+            if (label != NULL) {
+                offset = label->address - PC;
+            } else {
+                offset = atoi(tokens[2]);
             }
 
-            int offset = label->address - PC;
-            char imm[21];
-            imm_to_bin(offset, 20, imm);
+            char imm[22];
+            imm_to_bin(offset, 21, imm);
 
             char immediate_broken[21];
             immediate_broken[0]  = imm[0];   // bit 20
@@ -496,16 +499,9 @@ void encoder(FILE* input, FILE* output){
             immediate_broken[19] = imm[8];   // bit 12
             immediate_broken[20] = '\0';
 
-            if(rd == NULL){
-                fprintf(stderr, "register not found, J type\n");
-                exit(1);
-           }
-            else{
-                fprintf(output,"%s%s%s\n",immediate_broken,rd->encoding,Instruct->opcode);
-                line_no++;
-                PC = PC+4;
-            }
-            }
+            fprintf(output,"%s%s%s\n",immediate_broken,rd->encoding,Instruct->opcode);
+            line_no++;
+            PC = PC+4;
         }
       //B Type Instruction Encoding.
         else if(find_inst(tokens[0],Rtype,Rsize,Stype,Ssize,Itype,Isize,Utype,Usize,Jtype,Jsize,Btype,Bsize)=='B'){
@@ -525,14 +521,16 @@ void encoder(FILE* input, FILE* output){
                 }
                 return;
             }
-            if (label == NULL){
-                fprintf(stderr, "Error: label '%s' not found\n", tokens[3]);
-                exit(1);
+            
+            int offset;
+            if (label != NULL) {
+                offset = label->address - PC;
+            } else {
+                offset = atoi(tokens[3]);
             }
-            int offset = label->address - PC;
 
-            char imm[13];
-            imm_to_bin(offset,12,imm);
+            char imm[14];
+            imm_to_bin(offset,13,imm);
 
             char upper[8];  // imm[12|10:5]
             upper[0] = imm[0];   // bit 12
