@@ -244,7 +244,7 @@ void Store_Label(FILE* input){
         if (strlen(line) == 0){
             continue;
         }
-
+        
         char temp[100];
         strcpy(temp, line);  // save copy in temp before converting into tokens
 
@@ -281,15 +281,19 @@ void Store_Label(FILE* input){
     // tokenize last_line to check properly
     char* tokens[10];
     int count = 0;
-    char* elements = strtok(last_line, " ,()");
+    char* saveptr2;
+    char* elements = strtok_r(last_line, " ,()", &saveptr2);
     while (elements != NULL){
         tokens[count] = elements;
         count++;
-        elements = strtok(NULL, " ,()");
+        elements = strtok_r(NULL, " ,()", &saveptr2);
     }
 
     //To check if the last line is a virtual halt or not
     int is_halt = strcmp(tokens[0], "beq") == 0 && strcmp(tokens[1], "zero") == 0 && strcmp(tokens[2], "zero") == 0 && (strcmp(tokens[3], "0") == 0 || strcmp(tokens[3], "0x00000000") == 0);
+    if (!is_halt){
+    printf("Error: last instruction must be virtual halt\n");
+    }
 }
 
 //This is the responsible function which breaks assembly written line into tokens one by one taking lines from the file.
@@ -311,13 +315,13 @@ void encoder(FILE* input, FILE* output){
         char* tokens[10];
         int count = 0;
 
-        char* saveptr;
+        char* saveptr3;
 
-        char* elements = strtok_r(line, " :,()", &saveptr);
+        char* elements = strtok_r(line, " :,()", &saveptr3);
         while (elements != NULL){
             tokens[count] = elements;
             count++;
-            elements = strtok_r(NULL, " :,()", &saveptr);
+            elements = strtok_r(NULL, " :,()", &saveptr3);
         }
 
         //Example to understand what happened above: Given line = add t0, zero, t0
@@ -576,6 +580,7 @@ void encoder(FILE* input, FILE* output){
 int main(int argc, char* argv[]){      //for accessing input and output files in the command termial. First compile, then run .\main.exe input.txt output.txt 
     FILE* input = fopen(argv[1], "r");
     FILE* output = fopen(argv[2], "w");
+
     Store_Label(input);
     rewind(input);      
     encoder(input, output);
