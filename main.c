@@ -251,11 +251,13 @@ void Store_Label(FILE* input){
         char* tokens[10];
         int count = 0;
 
-        char* elements = strtok(line, " ,()");
+        char* saveptr; 
+
+        char* elements = strtok_r(line, " ,()", &saveptr);
         while (elements != NULL){
             tokens[count] = elements;
             count++;
-            elements = strtok(NULL, " ,()");
+            elements = strtok_r(NULL, " ,()", &saveptr);
         }
 
         char* colon = strchr(tokens[0], ':');
@@ -308,11 +310,14 @@ void encoder(FILE* input, FILE* output){
         //Parsing, ie splitting the line into tokens.
         char* tokens[10];
         int count = 0;
-        char* elements = strtok(line, " :,()");
+
+        char* saveptr;
+
+        char* elements = strtok_r(line, " :,()", &saveptr);
         while (elements != NULL){
             tokens[count] = elements;
             count++;
-            elements = strtok(NULL, " :,()");
+            elements = strtok_r(NULL, " :,()", &saveptr);
         }
 
         //Example to understand what happened above: Given line = add t0, zero, t0
