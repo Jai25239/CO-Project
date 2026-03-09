@@ -366,13 +366,13 @@ void encoder(FILE* input, FILE* output){
             
             if (Instruct == NULL || rd == NULL || r1 == NULL || r2 == NULL){
                 if(rd == NULL){
-                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[1]);
+                    fprintf(stderr,"Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[1]);
                 }
                 if(r1 == NULL){
-                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[2]);
+                    fprintf(stderr, "Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[2]);
                 }
                 if(r2 == NULL){
-                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[3]);
+                    fprintf(stderr, "Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[3]);
                 }                
                 return;
             } 
@@ -404,10 +404,10 @@ void encoder(FILE* input, FILE* output){
 
             if (Instruct == NULL || rs2 == NULL || rs1 == NULL){
                 if(rs1 == NULL){
-                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[3]);
+                    fprintf(stderr, "Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[3]);
                 }
                 if (rs2 == NULL){
-                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[1]);
+                    fprintf(stderr, "Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[1]);
                 }     
                 return;
             } 
@@ -429,19 +429,19 @@ void encoder(FILE* input, FILE* output){
                 rs1 = find_reg(tokens[3],RegList);
                 imm_to_bin(atoi(tokens[2]),12,imm);
                 if(rs1 ==NULL){
-                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[3]);
+                    fprintf(stderr, "Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[3]);
                 }
             }
             else{
                 rs1 = find_reg(tokens[2],RegList);
                 imm_to_bin(atoi(tokens[3]),12,imm);
                 if(rs1 ==NULL){
-                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[2]);
+                    fprintf(stderr, "Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[2]);
                 }
             }
             if(rd == NULL || rs1 == NULL){
                 if(rd ==NULL){
-                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[1]);
+                    fprintf(stderr, "Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[1]);
                 }
                 return;
             }
@@ -460,7 +460,7 @@ void encoder(FILE* input, FILE* output){
             char imm[21];
             imm_to_bin(atoi(tokens[2]),20,imm);
             if(rd == NULL){
-                printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[1]);
+                fprintf(stderr, "Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[1]);
                 return;
             }
             else{
@@ -476,14 +476,13 @@ void encoder(FILE* input, FILE* output){
             JTypeInstruction* Instruct = find_Jinst(tokens[0],Jtype,Jsize);
             Register* rd = find_reg(tokens[1],RegList);           
             if(rd == NULL){
-                printf("register not found, J type\n");
+                fprintf(stderr, "register not found, J type\n");
                 return;
             }
             if(find_label(tokens[2])){
             Label* label = find_label(tokens[2]);
             if (label == NULL){
-                printf("Error: label '%s' not found\n", tokens[2]);
-                fprintf(output, "Label not found.\n");
+                fprintf(stderr, "Error: label '%s' not found\n", tokens[2]);
                 return;
             }
 
@@ -515,7 +514,7 @@ void encoder(FILE* input, FILE* output){
             immediate_broken[20] = '\0';
 
             if(rd == NULL){
-                printf("register not found, J type\n");
+                fprintf(stderr, "register not found, J type\n");
                 return;
            }
             else{
@@ -534,16 +533,15 @@ void encoder(FILE* input, FILE* output){
             
             if (rs1 == NULL || rs2 == NULL){
                 if(rs1 == NULL){
-                    printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[2]);
+                    fprintf(stderr, "Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[2]);
                 }
                 if(rs2 == NULL){
-                printf("Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[3]);
+                    fprintf(stderr, "Error:\nIn line no.  %d the register  %s is not defined.\n",line_no,tokens[3]);
                 }
                 return;
             }
             if (label == NULL){
-                printf("Error: label '%s' not found\n", tokens[3]);
-                fprintf(output, "Label not found.\n");
+                fprintf(stderr, "Error: label '%s' not found\n", tokens[3]);
                 return;
             }
             int offset = label->address - PC;
@@ -574,13 +572,12 @@ void encoder(FILE* input, FILE* output){
             PC = PC+4;
         }
         else { 
-            fprintf(output, "Error in line %d", PC/4);
-            printf("ERROR! -In line no.  %d the instruction  %s is not defined.\n",line_no,tokens[0]);
+            fprintf(stderr, "ERROR! -In line no.  %d the instruction  %s is not defined.\n",line_no,tokens[0]);
             return;
        }
     }
     if (HALT == 0){
-        printf("Error: Missing virtual halt instruction\n");
+        fprintf(stderr, "Error: Missing virtual halt instruction\n");
     }
 }
 
@@ -589,11 +586,17 @@ int main(int argc, char* argv[]){      //for accessing input and output files in
     FILE* input = fopen(argv[1], "r");
     FILE* output = fopen(argv[2], "w");
 
+    if(input == NULL){
+        fprintf(stderr, "Error: could not open input file\n");
+        exit(1);
+    }
+
     Store_Label(input);
     rewind(input);      
     encoder(input, output);
 
+    fprintf(stderr, "Error message\n");
     fclose(input);
     fclose(output);
-    return 0;
+    exit(1);
 }
