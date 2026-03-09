@@ -465,14 +465,38 @@ void encoder(FILE* input, FILE* output){
                 return;
             }
 
+            int offset = label->address - PC;
             char imm[21];
-            imm_to_bin(label->address,20,imm);
+            imm_to_bin(offset, 20, imm);
+
+            char immediate_broken[21];
+            immediate_broken[0]  = imm[0];   // bit 20
+            immediate_broken[1]  = imm[10];  // bit 10
+            immediate_broken[2]  = imm[11];  // bit 9
+            immediate_broken[3]  = imm[12];  // bit 8
+            immediate_broken[4]  = imm[13];  // bit 7
+            immediate_broken[5]  = imm[14];  // bit 6
+            immediate_broken[6]  = imm[15];  // bit 5
+            immediate_broken[7]  = imm[16];  // bit 4
+            immediate_broken[8]  = imm[17];  // bit 3
+            immediate_broken[9]  = imm[18];  // bit 2
+            immediate_broken[10] = imm[19];  // bit 1
+            immediate_broken[11] = imm[9];   // bit 11
+            immediate_broken[12] = imm[1];   // bit 19
+            immediate_broken[13] = imm[2];   // bit 18
+            immediate_broken[14] = imm[3];   // bit 17
+            immediate_broken[15] = imm[4];   // bit 16
+            immediate_broken[16] = imm[5];   // bit 15
+            immediate_broken[17] = imm[6];   // bit 14
+            immediate_broken[18] = imm[7];   // bit 13
+            immediate_broken[19] = imm[8];   // bit 12
+            immediate_broken[20] = '\0';
             if(rd == NULL){
                 printf("register not found, J type\n");
                 return;
            }
             else{
-                fprintf(output,"%s%s%s\n",imm,rd->encoding,Instruct->opcode);
+                fprintf(output,"%s%s%s\n",immediate_broken,rd->encoding,Instruct->opcode);
                 line_no++;
                 PC = PC+4;
            }
