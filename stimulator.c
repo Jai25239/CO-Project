@@ -226,7 +226,7 @@ void Master_decoder(char whole_inst[]){
 
 void stimulator(FILE* input, FILE* output){
     char whole_inst[100];
-    int PC = 0;
+    int PC = 0; 
     int line_no = 1;
     int HALT = 0;
 
