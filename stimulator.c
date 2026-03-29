@@ -42,6 +42,7 @@ char* find_inst_from_opcode(char given_inst_opcode[]){
             return InsList[i].inst;
         }
     }
+    return NULL;
 }
 
 //Find the register from Reglist and return it's pointer, because we need the changes to be made in RegList itself.
@@ -51,6 +52,7 @@ Register* find_register(char address[]){
             return &RegList[i];
         }
     }
+    return NULL;
 }
 
 //Decoder specifically for R-type
@@ -62,10 +64,15 @@ void R_decoder(char whole_inst[]){
     char funct3[4];
     char rd_address[6];
     strncpy(funct7, whole_inst, 7);
-    strncpy(rs2_address, whole_inst + 6, 5);
-    strncpy(rs1_address, whole_inst + 11, 5);
-    strncpy(funct3, whole_inst + 16, 3);
-    strncpy(rd_address, whole_inst + 19, 5);
+    funct7[7] = '\0';
+    strncpy(rs2_address, whole_inst + 7, 5);
+    rs2_address[5] = '\0';
+    strncpy(rs1_address, whole_inst + 12, 5);
+    rs1_address[5] = '\0';
+    strncpy(funct3, whole_inst + 17, 3);
+    funct3[3] = '\0';
+    strncpy(rd_address, whole_inst + 20, 5);
+    rd_address[5] = '\0';
 
     //Finding those registers in RegList
     Register* rs2 = find_register(rs2_address);
@@ -127,34 +134,35 @@ void B_decoder(char whole_list[]){
 
 }
 
-void U_decoder(char whole_list){
+void U_decoder(char whole_list[]){
 
 }
 
-void J_decoder(char whole_list){
+void J_decoder(char whole_list[]){
 
 }
 
-void Lw_decoder(char whole_list){
+void Lw_decoder(char whole_list[]){
 
 }
 
-void Addi_decoder(char whole_list){
+void Addi_decoder(char whole_list[]){
 
 }
 
-void Sltui_decoder(char whole_list){
+void Sltui_decoder(char whole_list[]){
 
 }
 
-void Jalr_decoder(char whole_list){
+void Jalr_decoder(char whole_list[]){
 
 }
 
 void Master_decoder(char whole_inst[]){
     //Opcode extraction
     char given_opcode[8];
-    strncpy(given_opcode, whole_inst + 24, 7);
+    strncpy(given_opcode, whole_inst + 25, 7);
+    given_opcode[7] = '\0';
 
     //find which instruction it is
     char* inst_name = find_inst_from_opcode(given_opcode);
@@ -167,48 +175,56 @@ void Master_decoder(char whole_inst[]){
 
     if (strcmp(inst_name, "S") == 0){
         printf("%c", 'S');
+        S_decoder(whole_inst);
         return;
     }
 
     if (strcmp(inst_name, "B") == 0){
         printf("%c", 'B');
+        B_decoder(whole_inst);
         return;
     }
 
     if (strcmp(inst_name, "U") == 0){
         printf("%c", 'U');
+        U_decoder(whole_inst);
         return;
     }
 
     if (strcmp(inst_name, "J") == 0){
         printf("%c", 'J');
+        J_decoder(whole_inst);
         return;
     }
 
     if (strcmp(inst_name, "Lw") == 0){
         printf("Lw");
+        Lw_decoder(whole_inst);
         return;
     }
 
     if (strcmp(inst_name, "Addi") == 0){
         printf("Addi");
+        Addi_decoder(whole_inst);
         return;
     }
 
     if (strcmp(inst_name, "Sltiu") == 0){
         printf("Sltiu");
+        Sltui_decoder(whole_inst);
         return;
     }
 
     if (strcmp(inst_name, "Jalr") == 0){
         printf("Jalr");
+        Jalr_decoder(whole_inst);
         return;
     }
 
     return;
 }
 
-void encoder(FILE* input, FILE* output){
+void stimulator(FILE* input, FILE* output){
     char whole_inst[100];
     int PC = 0;
     int line_no = 1;
@@ -241,14 +257,6 @@ int main(int argc, char* argv[]){
         exit(1);
     }
 
-    encoder(input, output);/*/
+    stimulator(input, output);/*/
 
-    //Garbage code to test functions.
-    char str[32] = "0000000000000000000000001100111";
-    decoder(str);
-    char opcode[8];
-    strncpy(opcode, str + 24, 7);
-    for (int i = 0; i<8; i++){
-        printf("%c", opcode[i]);
-    }
 }
