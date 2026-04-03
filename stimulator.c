@@ -13,10 +13,26 @@ typedef struct {
     char inst[6];
 } Opcode;
 
+typedef struct {
+    int decimal_address;
+    char hex_address[12];
+    int value;
+} Memory;
+
 Opcode InsList[] = {
     {"0110011", "R"}, {"0100011", "S"}, {"1100011", "B"}, {"0110111", "U"},
     {"1101111", "J"},
     {"0000011", "Lw"}, {"0010011", "Addi"}, {"0010011", "Sltiu"}, {"1100111", "Jalr"}
+};
+
+Memory MemList[] = {
+    {0,  "0x0001_0000", 0},{1,  "0x0001_0004", 0},{2,  "0x0001_0008", 0},{3,  "0x0001_000C", 0},{4,  "0x0001_0010", 0},{5,  "0x0001_0014", 0},
+    {6,  "0x0001_0018", 0},{7,  "0x0001_001C", 0},{8,  "0x0001_0020", 0},{9,  "0x0001_0024", 0},{10, "0x0001_0028", 0},{11, "0x0001_002C", 0},
+    {12, "0x0001_0030", 0},{13, "0x0001_0034", 0},{14, "0x0001_0038", 0},{15, "0x0001_003C", 0},{16, "0x0001_0040", 0},{17, "0x0001_0044", 0},
+    {18, "0x0001_0048", 0},{19, "0x0001_004C", 0},{20, "0x0001_0050", 0},{21, "0x0001_0054", 0},{22, "0x0001_0058", 0},{23, "0x0001_005C", 0},
+    {24, "0x0001_0060", 0},{25, "0x0001_0064", 0},{26, "0x0001_0068", 0},{27, "0x0001_006C", 0},{28, "0x0001_0070", 0},{29, "0x0001_0074", 0},
+    {30, "0x0001_0078", 0},
+    {31, "0x0001_007C", 0}
 };
 
 Register RegList[] = {
@@ -35,6 +51,30 @@ Register RegList[] = {
         {"t3", "11100", 0}, {"t4", "11101", 0}, {"t5", "11110", 0}, {"t6", "11111", 0}
     };
 
+    int bin_to_dec(char* bin, int bit){
+    int dec =0;
+
+    for(int i=0; i<bit;i++){
+        char b = *(bin+bit-1-i);
+        if(b == '1'){
+            dec = dec+ (1<<i);
+        }
+        else { continue;
+        }
+    }
+    if(*bin == '1'){
+        dec -= (1<<bit);
+    }
+    return dec;
+}
+
+Memory* find_memory(int address){
+    for(int i=0; i<32; i++){
+        if(MemList[i].decimal_address == address){
+            return &MemList[i];
+        }
+    }
+}
 
 char* find_inst_from_opcode(char given_inst_opcode[]){
     for (int i = 0; i<9; i++){
@@ -47,7 +87,7 @@ char* find_inst_from_opcode(char given_inst_opcode[]){
 
 //Find the register from Reglist and return it's pointer, because we need the changes to be made in RegList itself.
 Register* find_register(char address[]){
-    for (int i = 0; i<32; i++){
+    for (int i = 0; i<33; i++){
         if (strcmp(address, RegList[i].encoding) == 0){
             return &RegList[i];
         }
@@ -127,7 +167,37 @@ void R_decoder(char whole_inst[]){
 }
 
 void S_decoder(char whole_inst[]){
+    char funct3[4];
+    strncpy(funct3,whole_inst + 17,3);
+    funct3[3] = '\0';
+    //First checking if the funct3 is 010 for store or not.
+    if(strcmp(funct3,"010")==0){
 
+        // Breaking the 32 bit instruction based on S type instruction.
+        char imm[13];
+        char rs2_address[6];
+        char rs1_address[6];
+        strncpy(imm,whole_inst+20,5);
+        strncpy(imm+5,whole_inst,7);
+        imm[12]='\0';
+        strncpy(rs2_address, whole_inst+7,5);
+        rs2_address[5]='\0';
+        strncpy(rs1_address,whole_inst+12,5);
+        rs1_address[5]='\0';
+
+        //Finding the registers.
+        Register* r2 = find_register(rs1_address);
+        Register* r1 = find_register(rs2_address);
+
+        //Searching for the memory address given and putting in it.
+        Memory* m1 = find_memory(bin_to_dec(imm,12)+(r1->value));
+        m1->value = r2->value;
+        return;
+    }
+
+    //Printing error if funct3 is not 010.
+    printf("error");
+    return;
 }
 
 void B_decoder(char whole_list[]){
