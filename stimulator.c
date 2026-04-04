@@ -20,7 +20,7 @@ typedef struct {
 } Memory;
 
 Opcode InsList[] = {
-    {"0110011", "R"}, {"0100011", "S"}, {"1100011", "B"}, {"0110111", "U"},
+    {"0110011", "R"}, {"0100011", "S"}, {"1100011", "B"}, {"0110111", "U"},{"0010111","U"},
     {"1101111", "J"},
     {"0000011", "Lw"}, {"0010011", "Addi"}, {"0010011", "Sltiu"}, {"1100111", "Jalr"}
 };
@@ -51,7 +51,7 @@ Register RegList[] = {
         {"t3", "11100", 0}, {"t4", "11101", 0}, {"t5", "11110", 0}, {"t6", "11111", 0}
     };
 
-    int bin_to_dec(char* bin, int bit){
+int bin_to_dec(char* bin, int bit){
     int dec =0;
 
     for(int i=0; i<bit;i++){
@@ -77,7 +77,7 @@ Memory* find_memory(int address){
 }
 
 char* find_inst_from_opcode(char given_inst_opcode[]){
-    for (int i = 0; i<9; i++){
+    for (int i = 0; i<10; i++){
         if (strcmp(given_inst_opcode, InsList[i].opcode) == 0){
             return InsList[i].inst;
         }
@@ -131,12 +131,22 @@ void R_decoder(char whole_inst[]){
     }
     //SLL
     if (strcmp("001", funct3) == 0){
-
+        if(rs2->value >= 0){
+            rd->value = (rs1->value)<<(rs2->value);
+        }
+        else{
+            rd->value = (rs1->value)<<((rs2->value)*(-1));
+        }
         return;
     }
     //SLT
     if (strcmp("010", funct3) == 0){
-
+        if((rs1->value) < (rs2->value)){
+            rd->value = 1;
+        }
+        else{
+            rd->value = 0;
+        }
         return;
     }
     //SLTU
@@ -146,22 +156,27 @@ void R_decoder(char whole_inst[]){
     }
     //XOR
     if (strcmp("100", funct3) == 0){
-
+        rd->value = (rs1->value)^(rs2->value);
         return;
     }
     //SRL
     if (strcmp("101", funct3) == 0){
-
+        if(rs2->value >= 0){
+            rd->value = (rs1->value)>>(rs2->value);
+        }
+        else{
+            rd->value = (rs1->value)>>((rs2->value)*(-1));
+        }
         return;
     }
     //OR
     if (strcmp("110", funct3) == 0){
-
+        rd->value = (rs1->value)|(rs2->value);
         return;
     }
     //AND
     if (strcmp("111", funct3) == 0){
-
+        rd->value = rs1->value && rs2->value; 
         return;
     }
 }
@@ -196,7 +211,7 @@ void S_decoder(char whole_inst[]){
     }
 
     //Printing error if funct3 is not 010.
-    printf("error");
+    
     return;
 }
 
@@ -204,16 +219,65 @@ void B_decoder(char whole_list[]){
 
 }
 
-void U_decoder(char whole_list[]){
+void U_decoder(char whole_inst[]){
+    //Spliting the 32 bits instruction based on R-type format
+    char opcode[8];
+    char imm[21];
+    char rd_address[6];
+    strncpy(imm,whole_inst,20);
+    imm[20]='\0';
+    strncpy(rd_address,whole_inst+20,5);
+    rd_address[5] = '\0';
+    strncpy(opcode,whole_inst+25,7);
+    opcode[7] = '\0';
+    
 
+    Register* rd = find_register(rd_address);
+
+
+    if(strcmp(opcode,"0110111")==0){
+        rd->value = bin_to_dec(imm,20)<<12;
+        printf("rd have %d ",rd->value);
+    }
+    else if(strcmp(opcode,"0010111")==0){
+        //rd->value = PC + (bin_to_dec(imm,20)<<12); 
+    }
 }
 
 void J_decoder(char whole_list[]){
 
 }
 
-void Lw_decoder(char whole_list[]){
+void Lw_decoder(char whole_inst[]){
+    char funct3[4];
+    strncpy(funct3,whole_inst + 17,3);
+    funct3[3] = '\0';
+    //First checking if the funct3 is 010 for store or not.
+    if(strcmp(funct3,"010")==0){
 
+        // Breaking the 32 bit instruction based on S type instruction.
+        char imm[13];
+        char rd_address[6];
+        char rs1_address[6];
+        strncpy(imm,whole_inst,12);
+        imm[12]='\0';
+        strncpy(rs1_address,whole_inst+12,5);
+        rs1_address[5]='\0';      
+        strncpy(rd_address,whole_inst+20,5);
+        rd_address[5]='\0';
+
+        //Finding the registers.
+        Register* rd = find_register(rd_address);
+        Register* r1 = find_register(rs1_address);
+
+        //Searching for the memory address given and putting in it.
+        Memory* m1 = find_memory((r1->value)+bin_to_dec(imm,12));
+        rd->value = m1->value;
+        printf("rd have %d ",rd->value);
+        return;
+    }
+    printf("error:\n");
+    return;
 }
 
 void Addi_decoder(char whole_list[]){
