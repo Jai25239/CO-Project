@@ -334,7 +334,8 @@ int U_decoder(char whole_inst[], int index){
     }
     else {
         printf("\nError in line %d", index + 1);
-        return -1;}
+        return -1;
+    }
 }
 
 int J_decoder(char whole_inst[], int index){
