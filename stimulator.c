@@ -97,7 +97,7 @@ Register* find_register(char address[]){
 }
 
 //Decoder specifically for R-type
-void R_decoder(char whole_inst[]){
+int R_decoder(char whole_inst[], int index){
     //Spliting the 32 bits instruction based on R-type format
     char funct7[8];
     char rs2_address[6];
@@ -123,66 +123,74 @@ void R_decoder(char whole_inst[]){
     //ADD
     if ((strcmp("000", funct3) == 0) && (strcmp("0000000", funct7) == 0)){
         rd->value = rs1->value + rs2->value;
-        return;
+        return 0;
     }
     //SUB
-    if ((strcmp("000", funct3) == 0) && (strcmp("0100000", funct7) == 0)){
+    else if ((strcmp("000", funct3) == 0) && (strcmp("0100000", funct7) == 0)){
         rd->value = rs1->value - rs2->value;
-        return;
+        return 0;
     }
     //SLL
-    if (strcmp("001", funct3) == 0){
+    else if (strcmp("001", funct3) == 0){
         if(rs2->value >= 0){
             rd->value = (rs1->value)<<(rs2->value);
         }
         else{
             rd->value = (rs1->value)<<((rs2->value)*(-1));
         }
-        return;
+        return 0;
     }
     //SLT
-    if (strcmp("010", funct3) == 0){
+    else if (strcmp("010", funct3) == 0){
         if((rs1->value) < (rs2->value)){
             rd->value = 1;
         }
         else{
             rd->value = 0;
         }
-        return;
+        return 0;
     }
     //SLTU
-    if (strcmp("011", funct3) == 0){
-
-        return;
+    else if (strcmp("011", funct3) == 0){
+        if ((unsigned int)(rs1->value) < (unsigned int)(rs2->value)){
+        rd->value = 1;
+        } 
+        else {
+        rd->value = 0;
+        }
+        return 0;
     }
     //XOR
-    if (strcmp("100", funct3) == 0){
+    else if (strcmp("100", funct3) == 0){
         rd->value = (rs1->value)^(rs2->value);
-        return;
+        return 0;
     }
     //SRL
-    if (strcmp("101", funct3) == 0){
+    else if (strcmp("101", funct3) == 0){
         if(rs2->value >= 0){
             rd->value = (rs1->value)>>(rs2->value);
         }
         else{
             rd->value = (rs1->value)>>((rs2->value)*(-1));
         }
-        return;
+        return 0;
     }
     //OR
-    if (strcmp("110", funct3) == 0){
+    else if (strcmp("110", funct3) == 0){
         rd->value = (rs1->value)|(rs2->value);
-        return;
+        return 0;
     }
     //AND
-    if (strcmp("111", funct3) == 0){
-        rd->value = rs1->value && rs2->value; 
-        return;
+    else if (strcmp("111", funct3) == 0){
+        rd->value = rs1->value & rs2->value; 
+        return 0;
     }
+    else {
+        printf("\nError in line %d", index + 1);
+        return -1;}
 }
 
-void S_decoder(char whole_inst[]){
+int S_decoder(char whole_inst[], int index){
     char funct3[4];
     strncpy(funct3,whole_inst + 17,3);
     funct3[3] = '\0';
@@ -208,12 +216,12 @@ void S_decoder(char whole_inst[]){
         //Searching for the memory address given and putting in it.
         Memory* m1 = find_memory(bin_to_dec(imm,12)+(r1->value));
         m1->value = r2->value;
-        return;
+        return 0;
     }
 
     //Printing error if funct3 is not 010.
-    
-    return;
+    printf("\nError in line %d", index + 1);
+    return -1;
 }
 
 int B_decoder(char whole_inst[], int index){
@@ -256,48 +264,51 @@ int B_decoder(char whole_inst[], int index){
     //beq
     if (strcmp(funct3, "000")== 0){
         if (rs1->value == rs2->value){
-            return bin_to_dec(imm, 12) + index;
+            return bin_to_dec(imm, 13)/4 + index;
         }
         else return index + 1;
     }
     //bne
     else if (strcmp(funct3, "001")== 0){
         if (rs1->value != rs2->value){
-            return bin_to_dec(imm, 12) + index;
+            return bin_to_dec(imm, 13)/4 + index;
         }
         else return index + 1;
     }
     //blt
     else if (strcmp(funct3, "100")== 0){
         if (rs1->value < rs2->value){
-            return bin_to_dec(imm, 12) + index;
+            return bin_to_dec(imm, 13)/4 + index;
         }
         else return index + 1;
     }
     //bge
     else if (strcmp(funct3, "101")== 0){
         if (rs1->value >= rs2->value){
-            return bin_to_dec(imm, 12) + index;
+            return bin_to_dec(imm, 13)/4 + index;
         }
         else return index + 1;
     }
     //bltu
     else if (strcmp(funct3, "110")== 0){
-        if (abs(rs1->value) < abs(rs2->value)){
-            return bin_to_dec(imm, 12) + index;
+        if ((unsigned int)(rs1->value) < (unsigned int)(rs2->value)){
+            return bin_to_dec(imm, 13)/4 + index;
         }
         else return index + 1;
     }
     //bgeu
     else if (strcmp(funct3, "111")== 0){
-        if (abs(rs1->value) >= abs(rs2->value)){
-            return bin_to_dec(imm, 12) + index;
+        if ((unsigned int)(rs1->value) >= (unsigned int)(rs2->value)){
+            return bin_to_dec(imm, 13)/4 + index;
         }
         else return index + 1;
     }
+    else {
+        printf("\nError in line %d", index + 1);
+        return -1;}
 }
 
-void U_decoder(char whole_inst[]){
+int U_decoder(char whole_inst[], int index){
     //Spliting the 32 bits instruction based on R-type format
     char opcode[8];
     char imm[21];
@@ -312,14 +323,18 @@ void U_decoder(char whole_inst[]){
 
     Register* rd = find_register(rd_address);
 
-
     if(strcmp(opcode,"0110111")==0){
         rd->value = bin_to_dec(imm,20)<<12;
         printf("rd have %d ",rd->value);
+        return 0;
     }
     else if(strcmp(opcode,"0010111")==0){
         //rd->value = PC + (bin_to_dec(imm,20)<<12); 
+        return 0;
     }
+    else {
+        printf("\nError in line %d", index + 1);
+        return -1;}
 }
 
 int J_decoder(char whole_inst[], int index){
@@ -349,11 +364,11 @@ int J_decoder(char whole_inst[], int index){
     
     Register* rd = find_register(rd_address);
     
-    rd->value = index + 1; // Save return address
-    return index + bin_to_dec(imm, 21);
+    rd->value = (index + 1)*4; // Save return address
+    return index + bin_to_dec(imm, 21)/4;
 }
 
-void Lw_decoder(char whole_inst[]){
+int Lw_decoder(char whole_inst[], int index){
     char funct3[4];
     strncpy(funct3,whole_inst + 17,3);
     funct3[3] = '\0';
@@ -379,13 +394,13 @@ void Lw_decoder(char whole_inst[]){
         Memory* m1 = find_memory((r1->value)+bin_to_dec(imm,12));
         rd->value = m1->value;
         printf("rd have %d ",rd->value);
-        return;
+        return 0;
     }
-    printf("error:\n");
-    return;
+    printf("\nError in line %d", index + 1);
+    return -1;
 }
 
-int Addi_decoder(char whole_inst[]){
+int Addi_decoder(char whole_inst[], int index){
     char imm[13];        // 12 bits + fucking null terminator
     char rs1_address[6];
     char funct3[4];
@@ -414,10 +429,12 @@ int Addi_decoder(char whole_inst[]){
         rd->value = rs1->value + bin_to_dec(imm, 12);
         return 0;
     }
-    else return -1;
+    else {
+        printf("\nError in line %d", index + 1);
+        return -1;}
 }
 
-int Sltui_decoder(char whole_inst[]){
+int Sltui_decoder(char whole_inst[], int index){
     char imm[13];        // 12 bits + fucking null terminator
     char rs1_address[6];
     char funct3[4];
@@ -442,13 +459,17 @@ int Sltui_decoder(char whole_inst[]){
     Register* rs1 = find_register(rs1_address);
     Register* rd = find_register(rd_address);
 
-    if (abs(rs1->value) < abs(bin_to_dec(imm, 12))){
-        rd->value = 1;
-        return 0;
+    if (strcmp(funct3, "011") == 0){
+        if ((unsigned int)(rs1->value) < (unsigned int)(bin_to_dec(imm, 12))){
+            rd->value = 1;
+            return 0;
+        }
+        else {
+            rd->value = 0;
+            return 0; 
+        }
     }
-    else {
-        rd->value = 0;
-        return 0; }
+    printf("\nError in line %d", index + 1);
     return -1;
 }
 
@@ -478,9 +499,12 @@ int Jalr_decoder(char whole_inst[], int index){
     Register* rd = find_register(rd_address);
 
     if (strcmp(funct3, "000")== 0){
-        rd->value = index + 1;
-        return rs1->value + bin_to_dec(imm, 12);
+        rd->value = (index + 1)*4;
+        return (rs1->value + bin_to_dec(imm, 12))/4;
     }
+    else {
+        printf("\nError in line %d", index + 1);
+        return -1;}
 }
 
 int Master_decoder(char whole_inst[], int index){
@@ -494,13 +518,15 @@ int Master_decoder(char whole_inst[], int index){
 
     if (strcmp(inst_name, "R") == 0){
         printf("%c", 'R');
-        R_decoder(whole_inst);
+        int result = R_decoder(whole_inst, index);
+        if (result == -1) return -1;
         return index + 1;
     }
 
     if (strcmp(inst_name, "S") == 0){
         printf("%c", 'S');
-        S_decoder(whole_inst);
+        int result = S_decoder(whole_inst, index);
+        if (result == -1) return -1;
         return index + 1;
     }
 
@@ -511,7 +537,8 @@ int Master_decoder(char whole_inst[], int index){
 
     if (strcmp(inst_name, "U") == 0){
         printf("%c", 'U');
-        U_decoder(whole_inst);
+        int result = U_decoder(whole_inst, index);
+        if (result == -1) return -1;
         return index + 1;
     }
 
@@ -522,19 +549,22 @@ int Master_decoder(char whole_inst[], int index){
 
     if (strcmp(inst_name, "Lw") == 0){
         printf("Lw");
-        Lw_decoder(whole_inst);
+        int result = Lw_decoder(whole_inst, index);
+        if (result == -1) return -1;
         return index + 1;
     }
 
     if (strcmp(inst_name, "Addi") == 0){
         printf("Addi");
-        Addi_decoder(whole_inst);
+        int result = Addi_decoder(whole_inst, index);
+        if (result == -1) return -1;
         return index + 1;
     }
 
     if (strcmp(inst_name, "Sltiu") == 0){
         printf("Sltiu");
-        Sltui_decoder(whole_inst);
+        int result = Sltui_decoder(whole_inst, index);
+        if (result == -1) return -1;
         return index + 1;
     }
 
@@ -557,8 +587,11 @@ void stimulator(FILE* input, FILE* output){
         instruction_count++;
     }
 
-    while (index <= instruction_count){
+    while (index < instruction_count){
         index = Master_decoder(instructions[index], index);
+        if (index == -1){
+            return;
+        }
     }
 }
 
