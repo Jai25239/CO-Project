@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+int PC = 0;
 typedef struct {
     char name[6];     
     char encoding[6]; 
@@ -215,8 +216,85 @@ void S_decoder(char whole_inst[]){
     return;
 }
 
-void B_decoder(char whole_list[]){
+int B_decoder(char whole_inst[], int index){
+    char rs2_address[6];
+    char rs1_address[6];
+    char funct3[4];
+    char imm[14];  // 13 bits + null terminator
+    
+    //rs2 [24:20] → bits 7-11 in whole_inst 
+    strncpy(rs2_address, whole_inst + 7, 5);
+    rs2_address[5] = '\0';
+    
+    //rs1 [19:15] → bits 12-16 in whole_inst
+    strncpy(rs1_address, whole_inst + 12, 5);
+    rs1_address[5] = '\0';
+    
+    //funct3 [14:12] → bits 17-19 in whole_inst
+    strncpy(funct3, whole_inst + 17, 3);
+    funct3[3] = '\0';
+    
+    //imm[12] is bit 0 of whole_inst (bit 31 of the instruction)
+    imm[0] = whole_inst[0];
+    
+    //imm[10:5] are bits 1-6 of whole_inst (bits 30:25)
+    strncpy(imm + 1, whole_inst + 1, 6);
+    
+    //imm[4:1] are bits 20-23 of whole_inst (bits 11:8)
+    strncpy(imm + 7, whole_inst + 20, 4);
+    
+    //imm[11] is bit 24 of whole_inst (bit 7)
+    imm[11] = whole_inst[24];
+    
+    //imm[0] is always 0 (branch targets are 2-byte aligned)
+    imm[12] = '0';
+    imm[13] = '\0';
+    
+    Register* rs1 = find_register(rs1_address);
+    Register* rs2 = find_register(rs2_address);
 
+    //beq
+    if (strcmp(funct3, "000")== 0){
+        if (rs1->value == rs2->value){
+            return bin_to_dec(imm, 12) + index;
+        }
+        else return index + 1;
+    }
+    //bne
+    else if (strcmp(funct3, "001")== 0){
+        if (rs1->value != rs2->value){
+            return bin_to_dec(imm, 12) + index;
+        }
+        else return index + 1;
+    }
+    //blt
+    else if (strcmp(funct3, "100")== 0){
+        if (rs1->value < rs2->value){
+            return bin_to_dec(imm, 12) + index;
+        }
+        else return index + 1;
+    }
+    //bge
+    else if (strcmp(funct3, "101")== 0){
+        if (rs1->value >= rs2->value){
+            return bin_to_dec(imm, 12) + index;
+        }
+        else return index + 1;
+    }
+    //bltu
+    else if (strcmp(funct3, "110")== 0){
+        if (abs(rs1->value) < abs(rs2->value)){
+            return bin_to_dec(imm, 12) + index;
+        }
+        else return index + 1;
+    }
+    //bgeu
+    else if (strcmp(funct3, "111")== 0){
+        if (abs(rs1->value) >= abs(rs2->value)){
+            return bin_to_dec(imm, 12) + index;
+        }
+        else return index + 1;
+    }
 }
 
 void U_decoder(char whole_inst[]){
@@ -244,8 +322,35 @@ void U_decoder(char whole_inst[]){
     }
 }
 
-void J_decoder(char whole_list[]){
-
+int J_decoder(char whole_inst[], int index){
+    char imm[22];        //21 bits + null fucking terminator
+    char rd_address[6];
+    
+    //rd [11:7] - bits 20-24 in whole_inst
+    strncpy(rd_address, whole_inst + 20, 5);
+    rd_address[5] = '\0';
+    
+    //imm[20] is bit 0 of whole_inst (bit 31 of instruction)
+    imm[0] = whole_inst[0];
+    
+    //imm[10:1] are bits 1-10 of whole_inst (bits 30:21)
+    strncpy(imm + 1, whole_inst + 1, 10);
+    
+    //imm[11] is bit 11 of whole_inst (bit 20)
+    imm[11] = whole_inst[11];
+    
+    // imm[19:12] are bits 12-19 of whole_inst (bits 19:12)
+    strncpy(imm + 12, whole_inst + 12, 8);
+    
+    // imm[0] is always 0 
+    imm[20] = '0';
+    
+    imm[21] = '\0';
+    
+    Register* rd = find_register(rd_address);
+    
+    rd->value = index + 1; // Save return address
+    return index + bin_to_dec(imm, 21);
 }
 
 void Lw_decoder(char whole_inst[]){
@@ -280,19 +385,105 @@ void Lw_decoder(char whole_inst[]){
     return;
 }
 
-void Addi_decoder(char whole_list[]){
-
+int Addi_decoder(char whole_inst[]){
+    char imm[13];        // 12 bits + fucking null terminator
+    char rs1_address[6];
+    char funct3[4];
+    char rd_address[6];
+    
+    //imm[11:0] -bits 0-11 in whole_inst (bits 31:20 of instruction)
+    strncpy(imm, whole_inst, 12);
+    imm[12] = '\0';
+    
+    //rs1 [19:15] - bits 12-16 in whole_inst
+    strncpy(rs1_address, whole_inst + 12, 5);
+    rs1_address[5] = '\0';
+    
+    //funct3 [14:12] - bits 17-19 in whole_inst
+    strncpy(funct3, whole_inst + 17, 3);
+    funct3[3] = '\0';
+    
+    //rd [11:7] - bits 20-24 in whole_inst
+    strncpy(rd_address, whole_inst + 20, 5);
+    rd_address[5] = '\0';
+    
+    Register* rs1 = find_register(rs1_address);
+    Register* rd = find_register(rd_address);
+    
+    if (strcmp(funct3, "000") == 0) {
+        rd->value = rs1->value + bin_to_dec(imm, 12);
+        return 0;
+    }
+    else return -1;
 }
 
-void Sltui_decoder(char whole_list[]){
+int Sltui_decoder(char whole_inst[]){
+    char imm[13];        // 12 bits + fucking null terminator
+    char rs1_address[6];
+    char funct3[4];
+    char rd_address[6];
+    
+    //imm[11:0] -bits 0-11 in whole_inst (bits 31:20 of instruction)
+    strncpy(imm, whole_inst, 12);
+    imm[12] = '\0';
+    
+    //rs1 [19:15] - bits 12-16 in whole_inst
+    strncpy(rs1_address, whole_inst + 12, 5);
+    rs1_address[5] = '\0';
+    
+    //funct3 [14:12] - bits 17-19 in whole_inst
+    strncpy(funct3, whole_inst + 17, 3);
+    funct3[3] = '\0';
+    
+    //rd [11:7] - bits 20-24 in whole_inst
+    strncpy(rd_address, whole_inst + 20, 5);
+    rd_address[5] = '\0';
+    
+    Register* rs1 = find_register(rs1_address);
+    Register* rd = find_register(rd_address);
 
+    if (abs(rs1->value) < abs(bin_to_dec(imm, 12))){
+        rd->value = 1;
+        return 0;
+    }
+    else {
+        rd->value = 0;
+        return 0; }
+    return -1;
 }
 
-void Jalr_decoder(char whole_list[]){
+int Jalr_decoder(char whole_inst[], int index){
+    char imm[13];        // 12 bits + fucking null terminator
+    char rs1_address[6];
+    char funct3[4];
+    char rd_address[6];
+    
+    //imm[11:0] -bits 0-11 in whole_inst (bits 31:20 of instruction)
+    strncpy(imm, whole_inst, 12);
+    imm[12] = '\0';
+    
+    //rs1 [19:15] - bits 12-16 in whole_inst
+    strncpy(rs1_address, whole_inst + 12, 5);
+    rs1_address[5] = '\0';
+    
+    //funct3 [14:12] - bits 17-19 in whole_inst
+    strncpy(funct3, whole_inst + 17, 3);
+    funct3[3] = '\0';
+    
+    //rd [11:7] - bits 20-24 in whole_inst
+    strncpy(rd_address, whole_inst + 20, 5);
+    rd_address[5] = '\0';
+    
+    Register* rs1 = find_register(rs1_address);
+    Register* rd = find_register(rd_address);
 
+    if (strcmp(funct3, "000")== 0){
+        rd->value = index + 1;
+        return rs1->value + bin_to_dec(imm, 12);
+    }
 }
 
-void Master_decoder(char whole_inst[]){
+int Master_decoder(char whole_inst[], int index){
     //Opcode extraction
     char given_opcode[8];
     strncpy(given_opcode, whole_inst + 25, 7);
@@ -304,75 +495,70 @@ void Master_decoder(char whole_inst[]){
     if (strcmp(inst_name, "R") == 0){
         printf("%c", 'R');
         R_decoder(whole_inst);
-        return;
+        return index + 1;
     }
 
     if (strcmp(inst_name, "S") == 0){
         printf("%c", 'S');
         S_decoder(whole_inst);
-        return;
+        return index + 1;
     }
 
     if (strcmp(inst_name, "B") == 0){
         printf("%c", 'B');
-        B_decoder(whole_inst);
-        return;
+        return B_decoder(whole_inst, index);
     }
 
     if (strcmp(inst_name, "U") == 0){
         printf("%c", 'U');
         U_decoder(whole_inst);
-        return;
+        return index + 1;
     }
 
     if (strcmp(inst_name, "J") == 0){
         printf("%c", 'J');
-        J_decoder(whole_inst);
-        return;
+        return J_decoder(whole_inst, index);
     }
 
     if (strcmp(inst_name, "Lw") == 0){
         printf("Lw");
         Lw_decoder(whole_inst);
-        return;
+        return index + 1;
     }
 
     if (strcmp(inst_name, "Addi") == 0){
         printf("Addi");
         Addi_decoder(whole_inst);
-        return;
+        return index + 1;
     }
 
     if (strcmp(inst_name, "Sltiu") == 0){
         printf("Sltiu");
         Sltui_decoder(whole_inst);
-        return;
+        return index + 1;
     }
 
     if (strcmp(inst_name, "Jalr") == 0){
         printf("Jalr");
-        Jalr_decoder(whole_inst);
-        return;
+        return Jalr_decoder(whole_inst, index);
     }
 
-    return;
+    return -1;
 }
 
 void stimulator(FILE* input, FILE* output){
-    char whole_inst[100];
-    int PC = 0; 
-    int line_no = 1;
     int HALT = 0;
+    int index = 0;
+    char instructions[1000][33];  
+    int instruction_count = 0;
 
-    while(fgets(whole_inst, 100, input) != NULL){   //Reads one line at a time. Do everything INSIDE THIS LOOP.
-        whole_inst[strcspn(whole_inst, "\r\n")] = '\0';
-        //SKIP EMPTY LINES
-        if (strlen(whole_inst) == 0){
-            continue;
-        }
-        Master_decoder(whole_inst);
-        PC = PC + 4;
-        line_no++;
+    while(fgets(instructions[instruction_count], 100, input) != NULL){
+        instructions[instruction_count][strcspn(instructions[instruction_count], "\r\n")] = '\0';
+        instruction_count++;
+    }
+
+    while (index <= instruction_count){
+        index = Master_decoder(instructions[index], index);
     }
 }
 
