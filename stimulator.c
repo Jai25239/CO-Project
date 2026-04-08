@@ -329,7 +329,7 @@ int U_decoder(char whole_inst[], int index){
         return 0;
     }
     else if(strcmp(opcode,"0010111")==0){
-        //rd->value = PC + (bin_to_dec(imm,20)<<12); 
+        rd->value = index + (bin_to_dec(imm,20)<<12); 
         return 0;
     }
     else {
