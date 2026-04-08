@@ -329,7 +329,7 @@ int U_decoder(char whole_inst[], int index){
         return 0;
     }
     else if(strcmp(opcode,"0010111")==0){
-        rd->value = index + (bin_to_dec(imm,20)<<12); 
+        rd->value = index*4 + (bin_to_dec(imm,20)<<12); 
         return 0;
     }
     else {
@@ -600,8 +600,8 @@ void stimulator(FILE* input, FILE* output){
         if (index == -1){
             return;
         }
-        fprintf(output, "\n%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
-        index*4, RegList[0].value, RegList[1].value, RegList[2].value, RegList[3].value, RegList[4].value, RegList[5].value, RegList[6].value, RegList[7].value, RegList[8].value, RegList[9].value, RegList[10].value, RegList[11].value, RegList[12].value, RegList[13].value, RegList[14].value, RegList[15].value, RegList[16].value, RegList[17].value, RegList[18].value, RegList[19].value, RegList[20].value, RegList[21].value, RegList[22].value, RegList[23].value, RegList[24].value, RegList[25].value, RegList[26].value, RegList[27].value, RegList[28].value, RegList[29].value, RegList[29].value, RegList[30].value, RegList[31].value
+        fprintf(output, "\n%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
+        index*4, RegList[0].value, RegList[1].value, RegList[2].value, RegList[3].value, RegList[4].value, RegList[5].value, RegList[6].value, RegList[7].value, RegList[8].value, RegList[10].value, RegList[11].value, RegList[12].value, RegList[13].value, RegList[14].value, RegList[15].value, RegList[16].value, RegList[17].value, RegList[18].value, RegList[19].value, RegList[20].value, RegList[21].value, RegList[22].value, RegList[23].value, RegList[24].value, RegList[25].value, RegList[26].value, RegList[27].value, RegList[28].value, RegList[29].value, RegList[30].value, RegList[31].value
         );
 
     }
