@@ -518,59 +518,59 @@ int Master_decoder(char whole_inst[], int index){
     char* inst_name = find_inst_from_opcode(given_opcode);
 
     if (strcmp(inst_name, "R") == 0){
-        printf("%c", 'R');
+        printf("\n%c", 'R');
         int result = R_decoder(whole_inst, index);
         if (result == -1) return -1;
         return index + 1;
     }
 
     if (strcmp(inst_name, "S") == 0){
-        printf("%c", 'S');
+        printf("\n%c", 'S');
         int result = S_decoder(whole_inst, index);
         if (result == -1) return -1;
         return index + 1;
     }
 
     if (strcmp(inst_name, "B") == 0){
-        printf("%c", 'B');
+        printf("\n%c", 'B');
         return B_decoder(whole_inst, index);
     }
 
     if (strcmp(inst_name, "U") == 0){
-        printf("%c", 'U');
+        printf("\n%c", 'U');
         int result = U_decoder(whole_inst, index);
         if (result == -1) return -1;
         return index + 1;
     }
 
     if (strcmp(inst_name, "J") == 0){
-        printf("%c", 'J');
+        printf("\n%c", 'J');
         return J_decoder(whole_inst, index);
     }
 
     if (strcmp(inst_name, "Lw") == 0){
-        printf("Lw");
+        printf("\nLw");
         int result = Lw_decoder(whole_inst, index);
         if (result == -1) return -1;
         return index + 1;
     }
 
     if (strcmp(inst_name, "Addi") == 0){
-        printf("Addi");
+        printf("\nAddi");
         int result = Addi_decoder(whole_inst, index);
         if (result == -1) return -1;
         return index + 1;
     }
 
     if (strcmp(inst_name, "Sltiu") == 0){
-        printf("Sltiu");
+        printf("\nSltiu");
         int result = Sltui_decoder(whole_inst, index);
         if (result == -1) return -1;
         return index + 1;
     }
 
     if (strcmp(inst_name, "Jalr") == 0){
-        printf("Jalr");
+        printf("\nJalr");
         return Jalr_decoder(whole_inst, index);
     }
 
