@@ -601,9 +601,9 @@ int Master_decoder(char whole_inst[], int index){
     return -1;
 }
 
-void stimulator(FILE* input, FILE* output){
+int stimulator(FILE* input, FILE* output){
     int VHalt = 0;
-    int index = 0;
+    int index = -1;
     char instructions[65][33];  
     int instruction_count = 0;
     char halt_inst[] = "00000000000000000000000001100011";
@@ -627,12 +627,12 @@ void stimulator(FILE* input, FILE* output){
         index = Master_decoder(instructions[index], index);
         RegList[0].value = 0;
         if (index == -1){
-            return;
+            return -1;
         }
         // fprintf(output, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
         // (index-1)*4, RegList[0].value, RegList[1].value, RegList[2].value, RegList[3].value, RegList[4].value, RegList[5].value, RegList[6].value, RegList[7].value, RegList[8].value, RegList[10].value, RegList[11].value, RegList[12].value, RegList[13].value, RegList[14].value, RegList[15].value, RegList[16].value, RegList[17].value, RegList[18].value, RegList[19].value, RegList[20].value, RegList[21].value, RegList[22].value, RegList[23].value, RegList[24].value, RegList[25].value, RegList[26].value, RegList[27].value, RegList[28].value, RegList[29].value, RegList[30].value, RegList[31].value
         // );
-        dec_to_bin(index, 32, result);
+        dec_to_bin(index*4, 32, result);
         strncpy(to_print+2, result, 32);
         fprintf(output, "%s ", to_print);
         printer(output);
@@ -643,6 +643,7 @@ void stimulator(FILE* input, FILE* output){
             fprintf(output, "\n%s: %d", MemList[i].hex_address, MemList[i].value);
         }
     }
+    return 0;
 }
 
 
