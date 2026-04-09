@@ -15,7 +15,7 @@ typedef struct {
 } Opcode;
 
 typedef struct {
-    int decimal_address;
+    long long decimal_address;
     char hex_address[12];
     int value;
 } Memory;
@@ -74,7 +74,7 @@ int bin_to_dec(char* bin, int bit){
 }
 
 Memory* find_memory(int address){
-    for(int i=0; i<32; i++){
+    for(int i=0; i<64; i++){
         if(MemList[i].decimal_address == address){
             return &MemList[i];
         }
@@ -205,8 +205,8 @@ int S_decoder(char whole_inst[], int index){
         char imm[13];
         char rs2_address[6];
         char rs1_address[6];
-        strncpy(imm,whole_inst+20,5);
-        strncpy(imm+5,whole_inst,7);
+        strncpy(imm,whole_inst,7);
+        strncpy(imm+7,whole_inst+20,5);
         imm[12]='\0';
         strncpy(rs2_address, whole_inst+7,5);
         rs2_address[5]='\0';
@@ -214,8 +214,8 @@ int S_decoder(char whole_inst[], int index){
         rs1_address[5]='\0';
 
         //Finding the registers.
-        Register* r2 = find_register(rs1_address);
-        Register* r1 = find_register(rs2_address);
+        Register* r2 = find_register(rs2_address);
+        Register* r1 = find_register(rs1_address);
 
         //Searching for the memory address given and putting in it.
         Memory* m1 = find_memory(bin_to_dec(imm,12)+(r1->value));
@@ -248,17 +248,17 @@ int B_decoder(char whole_inst[], int index){
     
     //imm[12] is bit 0 of whole_inst (bit 31 of the instruction)
     imm[0] = whole_inst[0];
-    
-    //imm[10:5] are bits 1-6 of whole_inst (bits 30:25)
-    strncpy(imm + 1, whole_inst + 1, 6);
-    
-    //imm[4:1] are bits 20-23 of whole_inst (bits 11:8)
-    strncpy(imm + 7, whole_inst + 20, 4);
-    
-    //imm[11] is bit 24 of whole_inst (bit 7)
-    imm[11] = whole_inst[24];
-    
-    //imm[0] is always 0 (branch targets are 2-byte aligned)
+    imm[1]= whole_inst[24];
+    imm[2]= whole_inst[1];
+    imm[3] = whole_inst[2];
+    imm[4] = whole_inst[3];
+    imm[5] = whole_inst[4];
+    imm[6] = whole_inst[5];
+    imm[7] = whole_inst[6];
+    imm[8] = whole_inst[20];
+    imm[9] = whole_inst[21];
+    imm[10] = whole_inst[22];
+    imm[11] = whole_inst[23];
     imm[12] = '0';
     imm[13] = '\0';
     
@@ -351,20 +351,12 @@ int J_decoder(char whole_inst[], int index){
     rd_address[5] = '\0';
     
     //imm[20] is bit 0 of whole_inst (bit 31 of instruction)
-    imm[0] = whole_inst[0];
-    
-    //imm[10:1] are bits 1-10 of whole_inst (bits 30:21)
-    strncpy(imm + 1, whole_inst + 1, 10);
-    
-    //imm[11] is bit 11 of whole_inst (bit 20)
-    imm[11] = whole_inst[11];
-    
-    // imm[19:12] are bits 12-19 of whole_inst (bits 19:12)
-    strncpy(imm + 12, whole_inst + 12, 8);
-    
-    // imm[0] is always 0 
+    imm[0] = whole_inst[0]; imm[1] = whole_inst[12]; imm[2] = whole_inst[13]; imm[3] = whole_inst[14]; 
+    imm[4] = whole_inst[15]; imm[5] = whole_inst[16]; imm[6] = whole_inst[17]; imm[7] = whole_inst[18]; 
+    imm[8] = whole_inst[19]; imm[9] = whole_inst[11]; imm[10] = whole_inst[1]; imm[11] = whole_inst[2]; 
+    imm[12] = whole_inst[3]; imm[13] = whole_inst[4]; imm[14] = whole_inst[5]; imm[15] = whole_inst[6]; 
+    imm[16] = whole_inst[7]; imm[17] = whole_inst[8]; imm[18] = whole_inst[9]; imm[19] = whole_inst[10];
     imm[20] = '0';
-    
     imm[21] = '\0';
     
     Register* rd = find_register(rd_address);
@@ -529,7 +521,7 @@ int Master_decoder(char whole_inst[], int index){
     }
 
     if (strcmp(inst_name, "S") == 0){
-        printf("\n%c", 'S');
+        printf("\nS");
         int result = S_decoder(whole_inst, index);
         if (result == -1) return -1;
         return index + 1;
@@ -604,13 +596,12 @@ void stimulator(FILE* input, FILE* output){
         if (index == -1){
             return;
         }
-        fprintf(output, "\n%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
-        index*4, RegList[0].value, RegList[1].value, RegList[2].value, RegList[3].value, RegList[4].value, RegList[5].value, RegList[6].value, RegList[7].value, RegList[8].value, RegList[10].value, RegList[11].value, RegList[12].value, RegList[13].value, RegList[14].value, RegList[15].value, RegList[16].value, RegList[17].value, RegList[18].value, RegList[19].value, RegList[20].value, RegList[21].value, RegList[22].value, RegList[23].value, RegList[24].value, RegList[25].value, RegList[26].value, RegList[27].value, RegList[28].value, RegList[29].value, RegList[30].value, RegList[31].value
+        fprintf(output, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+        (index-1)*4, RegList[0].value, RegList[1].value, RegList[2].value, RegList[3].value, RegList[4].value, RegList[5].value, RegList[6].value, RegList[7].value, RegList[8].value, RegList[10].value, RegList[11].value, RegList[12].value, RegList[13].value, RegList[14].value, RegList[15].value, RegList[16].value, RegList[17].value, RegList[18].value, RegList[19].value, RegList[20].value, RegList[21].value, RegList[22].value, RegList[23].value, RegList[24].value, RegList[25].value, RegList[26].value, RegList[27].value, RegList[28].value, RegList[29].value, RegList[30].value, RegList[31].value
         );
-
     }
     if (VHalt == 1){
-        for (int i = 0; i<32; i++){
+        for (int i = 0; i<64; i++){
             fprintf(output, "\n%s: %d", MemList[i].hex_address, MemList[i].value);
         }
     }
