@@ -73,6 +73,33 @@ int bin_to_dec(char* bin, int bit){
     return dec;
 }
 
+char* dec_to_bin(int num, int bits, char* result){  //num: What you want to convert. bits:Into how many bits. result: Where you want to store it.
+    if (num <0){
+        num = num + (1<<bits);
+    }
+    for (int i = bits-1; i>=0; i--){
+        result[i] = (num%2) + '0';
+        num = num/2;
+    }
+    result[bits] = '\0';
+    return result;
+}
+
+void printer(FILE* output){
+    char result[33];
+    char to_print[35];
+    to_print[0] = '0';
+    to_print[1] = 'b';
+    for (int i = 0; i<33; i++){
+        if (i == 9){
+            continue;
+        }
+        dec_to_bin(RegList[i].value, 32, result);
+        strncpy(to_print+2, result, 32);
+        fprintf(output, "%s ", to_print);
+    }
+}
+
 Memory* find_memory(int address){
     for(int i=0; i<64; i++){
         if(MemList[i].decimal_address == address){
@@ -580,6 +607,11 @@ void stimulator(FILE* input, FILE* output){
     char instructions[65][33];  
     int instruction_count = 0;
     char halt_inst[] = "00000000000000000000000001100011";
+    char result[33];
+    char to_print[35];
+    to_print[0] = '0';
+    to_print[1] = 'b';
+    to_print[34] = '\0';
 
     while(fgets(instructions[instruction_count], 100, input) != NULL){
         instructions[instruction_count][strcspn(instructions[instruction_count], "\r\n")] = '\0';
@@ -597,9 +629,14 @@ void stimulator(FILE* input, FILE* output){
         if (index == -1){
             return;
         }
-        fprintf(output, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
-        (index-1)*4, RegList[0].value, RegList[1].value, RegList[2].value, RegList[3].value, RegList[4].value, RegList[5].value, RegList[6].value, RegList[7].value, RegList[8].value, RegList[10].value, RegList[11].value, RegList[12].value, RegList[13].value, RegList[14].value, RegList[15].value, RegList[16].value, RegList[17].value, RegList[18].value, RegList[19].value, RegList[20].value, RegList[21].value, RegList[22].value, RegList[23].value, RegList[24].value, RegList[25].value, RegList[26].value, RegList[27].value, RegList[28].value, RegList[29].value, RegList[30].value, RegList[31].value
-        );
+        // fprintf(output, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+        // (index-1)*4, RegList[0].value, RegList[1].value, RegList[2].value, RegList[3].value, RegList[4].value, RegList[5].value, RegList[6].value, RegList[7].value, RegList[8].value, RegList[10].value, RegList[11].value, RegList[12].value, RegList[13].value, RegList[14].value, RegList[15].value, RegList[16].value, RegList[17].value, RegList[18].value, RegList[19].value, RegList[20].value, RegList[21].value, RegList[22].value, RegList[23].value, RegList[24].value, RegList[25].value, RegList[26].value, RegList[27].value, RegList[28].value, RegList[29].value, RegList[30].value, RegList[31].value
+        // );
+        dec_to_bin(index, 32, result);
+        strncpy(to_print+2, result, 32);
+        fprintf(output, "%s ", to_print);
+        printer(output);
+        fprintf(output, "\n");
     }
     if (VHalt == 1){
         for (int i = 32; i<64; i++){
