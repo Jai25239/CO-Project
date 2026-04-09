@@ -602,7 +602,7 @@ void stimulator(FILE* input, FILE* output){
         );
     }
     if (VHalt == 1){
-        for (int i = 0; i<64; i++){
+        for (int i = 32; i<64; i++){
             fprintf(output, "\n%s: %d", MemList[i].hex_address, MemList[i].value);
         }
     }
