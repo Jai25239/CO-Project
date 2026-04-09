@@ -100,6 +100,22 @@ void printer(FILE* output){
     }
 }
 
+void printer_m(FILE* output){
+    char result[33];
+    char to_print[35];
+    to_print[0] = '0';
+    to_print[1] = 'b';
+    for (int i = 32; i<64; i++){
+        if (i == 9){
+            continue;
+        }
+        dec_to_bin(MemList[i].value, 32, result);
+        strncpy(to_print+2, result, 32);
+        fprintf(output, "%s: %s\n", MemList[i].hex_address, to_print);
+    }
+}
+
+
 Memory* find_memory(int address){
     for(int i=0; i<64; i++){
         if(MemList[i].decimal_address == address){
@@ -639,9 +655,10 @@ int stimulator(FILE* input, FILE* output){
         fprintf(output, "\n");
     }
     if (VHalt == 1){
-        for (int i = 32; i<64; i++){
-            fprintf(output, "\n%s: %d", MemList[i].hex_address, MemList[i].value);
-        }
+        // for (int i = 32; i<64; i++){
+        //     fprintf(output, "\n%s: %d", MemList[i].hex_address, MemList[i].value);
+        // }
+        printer_m(output);
     }
     return 0;
 }
