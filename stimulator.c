@@ -105,9 +105,6 @@ void printer_m(FILE* output){
     to_print[0] = '0';
     to_print[1] = 'b';
     for (int i = 32; i<64; i++){
-        if (i == 9){
-            continue;
-        }
         dec_to_bin(MemList[i].value, 32, result);
         strncpy(to_print+2, result, 32);
         fprintf(output, "%s:%s\n", MemList[i].hex_address, to_print);
