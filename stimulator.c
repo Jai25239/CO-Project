@@ -75,10 +75,12 @@ int bin_to_dec(char* bin, int bit){
 
 Memory* find_memory(int address){
     for(int i=0; i<64; i++){
+    for(int i=0; i<64; i++){
         if(MemList[i].decimal_address == address){
             return &MemList[i];
         }
     }
+    return NULL;
 }
 
 char* find_inst_from_opcode(char given_inst_opcode[]){
