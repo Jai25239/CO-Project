@@ -603,7 +603,7 @@ int Master_decoder(char whole_inst[], int index){
 
 int stimulator(FILE* input, FILE* output){
     int VHalt = 0;
-    int index = -1;
+    int index = 0;
     char instructions[65][33];  
     int instruction_count = 0;
     char halt_inst[] = "00000000000000000000000001100011";
