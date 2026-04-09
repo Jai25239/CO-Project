@@ -95,6 +95,7 @@ void printer(FILE* output){
         }
         dec_to_bin(RegList[i].value, 32, result);
         strncpy(to_print+2, result, 32);
+        to_print[34] = '\0';
         fprintf(output, "%s ", to_print);
     }
 }
@@ -107,6 +108,7 @@ void printer_m(FILE* output){
     for (int i = 32; i<64; i++){
         dec_to_bin(MemList[i].value, 32, result);
         strncpy(to_print+2, result, 32);
+        to_print[34] = '\0';
         fprintf(output, "%s:%s\n", MemList[i].hex_address, to_print);
     }
 }
