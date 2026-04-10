@@ -177,7 +177,7 @@ int R_decoder(char whole_inst[], int index){
         return 0;
     }
     //SLL
-    else if (strcmp("001", funct3) == 0){
+    else if ((strcmp("001", funct3) == 0) && (strcmp("0000000", funct7) == 0)){
         if(rs2->value >= 0){
             rd->value = (rs1->value)<<(rs2->value);
         }
@@ -187,7 +187,7 @@ int R_decoder(char whole_inst[], int index){
         return 0;
     }
     //SLT
-    else if (strcmp("010", funct3) == 0){
+    else if ((strcmp("010", funct3) == 0) && (strcmp("0000000", funct7) == 0)){
         if((rs1->value) < (rs2->value)){
             rd->value = 1;
         }
@@ -197,7 +197,7 @@ int R_decoder(char whole_inst[], int index){
         return 0;
     }
     //SLTU
-    else if (strcmp("011", funct3) == 0){
+    else if ((strcmp("011", funct3) == 0) && (strcmp("0000000", funct7) == 0)){
         if ((unsigned int)(rs1->value) < (unsigned int)(rs2->value)){
         rd->value = 1;
         } 
@@ -207,12 +207,12 @@ int R_decoder(char whole_inst[], int index){
         return 0;
     }
     //XOR
-    else if (strcmp("100", funct3) == 0){
+    else if ((strcmp("100", funct3) == 0) && (strcmp("0000000", funct7) == 0)){
         rd->value = (rs1->value)^(rs2->value);
         return 0;
     }
     //SRL
-    else if (strcmp("101", funct3) == 0){
+    else if ((strcmp("101", funct3) == 0) && (strcmp("0000000", funct7) == 0)){
         if(rs2->value >= 0){
             rd->value = (rs1->value)>>(rs2->value);
         }
@@ -222,12 +222,12 @@ int R_decoder(char whole_inst[], int index){
         return 0;
     }
     //OR
-    else if (strcmp("110", funct3) == 0){
+    else if ((strcmp("110", funct3) == 0) && (strcmp("0000000", funct7) == 0)){
         rd->value = (rs1->value)|(rs2->value);
         return 0;
     }
     //AND
-    else if (strcmp("111", funct3) == 0){
+    else if ((strcmp("111", funct3) == 0) && (strcmp("0000000", funct7) == 0)){
         rd->value = rs1->value & rs2->value; 
         return 0;
     }
