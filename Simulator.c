@@ -232,7 +232,7 @@ int R_decoder(char whole_inst[], int index){
         return 0;
     }
     else {
-        printf("\nError in line %d", index + 1);
+        //printf("\nError in line %d", index + 1);
         return -1;}
 }
 
@@ -261,12 +261,16 @@ int S_decoder(char whole_inst[], int index){
 
         //Searching for the memory address given and putting in it.
         Memory* m1 = find_memory(bin_to_dec(imm,12)+(r1->value));
+        if (m1 == NULL){
+            //printf("S type invalid mem access");
+            return -1;
+        }
         m1->value = r2->value;
         return 0;
     }
 
     //Printing error if funct3 is not 010.
-    printf("\nError in line %d", index + 1);
+    //printf("\nError in line %d", index + 1);
     return -1;
 }
 
@@ -350,7 +354,7 @@ int B_decoder(char whole_inst[], int index){
         else return index + 1;
     }
     else {
-        printf("\nError in line %d", index + 1);
+        //printf("\nError in line %d", index + 1);
         return -1;}
 }
 
@@ -379,7 +383,7 @@ int U_decoder(char whole_inst[], int index){
         return 0;
     }
     else {
-        printf("\nError in line %d", index + 1);
+        //printf("\nError in line %d", index + 1);
         return -1;
     }
 }
@@ -431,11 +435,14 @@ int Lw_decoder(char whole_inst[], int index){
 
         //Searching for the memory address given and putting in it.
         Memory* m1 = find_memory((r1->value)+bin_to_dec(imm,12));
+        if (m1 == NULL){
+            return -1;
+        }
         rd->value = m1->value;
         // printf("rd have %d ",rd->value);
         return 0;
     }
-    printf("\nError in line %d", index + 1);
+    //printf("\nError in line %d", index + 1);
     return -1;
 }
 
@@ -469,7 +476,7 @@ int Addi_decoder(char whole_inst[], int index){
         return 0;
     }
     else {
-        printf("\nError in line %d", index + 1);
+        //printf("\nError in line %d", index + 1);
         return -1;}
 }
 
@@ -508,7 +515,7 @@ int Sltui_decoder(char whole_inst[], int index){
             return 0; 
         }
     }
-    printf("\nError in line %d", index + 1);
+    //printf("\nError in line %d", index + 1);
     return -1;
 }
 
@@ -542,7 +549,7 @@ int Jalr_decoder(char whole_inst[], int index){
         return (rs1->value + bin_to_dec(imm, 12))/4;
     }
     else {
-        printf("\nError in line %d", index + 1);
+        //printf("\nError in line %d", index + 1);
         return -1;}
 }
 
@@ -556,6 +563,7 @@ int Master_decoder(char whole_inst[], int index){
     char* inst_name = find_inst_from_opcode(given_opcode);
 
     if (inst_name == NULL) {
+        printf("Inavlid opcode instruction");
         return -1;
     }
 
@@ -616,6 +624,7 @@ int Master_decoder(char whole_inst[], int index){
         return Jalr_decoder(whole_inst, index);
     }
 
+    //printf("Inccorrect instruction overall");
     return -1;
 }
 
@@ -685,6 +694,9 @@ int main(int argc, char* argv[]){
         exit(1);
     }
 
-    simulator(input, output);
+    int k = simulator(input, output);
+    if (k ==-1){
+        return -1;
+    }
     return 0;
 }
