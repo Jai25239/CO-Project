@@ -163,8 +163,17 @@ int R_decoder(char whole_inst[], int index){
 
     //Finding those registers in RegList
     Register* rs2 = find_register(rs2_address);
+    if(rs2 == NULL){
+        return -1;
+    }
     Register* rs1 = find_register(rs1_address);
+    if(rs1 == NULL){
+        return -1;
+    }
     Register* rd = find_register(rd_address);
+    if(rd == NULL){
+        return -1;
+    }
 
     //ADD
     if ((strcmp("000", funct3) == 0) && (strcmp("0000000", funct7) == 0)){
@@ -257,7 +266,13 @@ int S_decoder(char whole_inst[], int index){
 
         //Finding the registers.
         Register* r2 = find_register(rs2_address);
+        if(r2 == NULL){
+            return -1;
+        }
         Register* r1 = find_register(rs1_address);
+        if(r1 == NULL){
+            return -1;
+        }
 
         //Searching for the memory address given and putting in it.
         Memory* m1 = find_memory(bin_to_dec(imm,12)+(r1->value));
@@ -309,7 +324,13 @@ int B_decoder(char whole_inst[], int index){
     imm[13] = '\0';
     
     Register* rs1 = find_register(rs1_address);
+    if(rs1 == NULL){
+        return -1;
+    }
     Register* rs2 = find_register(rs2_address);
+    if(rs2 == NULL){
+        return -1;
+    }
 
     //beq
     if (strcmp(funct3, "000")== 0){
@@ -372,6 +393,9 @@ int U_decoder(char whole_inst[], int index){
     
 
     Register* rd = find_register(rd_address);
+    if(rd == NULL){
+        return -1;
+    }
 
     if(strcmp(opcode,"0110111")==0){
         rd->value = bin_to_dec(imm,20)<<12;
@@ -406,6 +430,9 @@ int J_decoder(char whole_inst[], int index){
     imm[21] = '\0';
     
     Register* rd = find_register(rd_address);
+    if(rd == NULL){
+        return -1;
+    }
     
     rd->value = (index + 1)*4; // Save return address
     return index + bin_to_dec(imm, 21)/4;
@@ -431,7 +458,13 @@ int Lw_decoder(char whole_inst[], int index){
 
         //Finding the registers.
         Register* rd = find_register(rd_address);
+        if(rd == NULL){
+            return -1;
+        }
         Register* r1 = find_register(rs1_address);
+        if(r1 == NULL){
+            return -1;
+        }
 
         //Searching for the memory address given and putting in it.
         Memory* m1 = find_memory((r1->value)+bin_to_dec(imm,12));
@@ -469,7 +502,13 @@ int Addi_decoder(char whole_inst[], int index){
     rd_address[5] = '\0';
     
     Register* rs1 = find_register(rs1_address);
+    if(rs1 == NULL){
+        return -1;
+    }
     Register* rd = find_register(rd_address);
+    if(rd == NULL){
+        return -1;
+    }
     
     if (strcmp(funct3, "000") == 0) {
         rd->value = rs1->value + bin_to_dec(imm, 12);
@@ -503,7 +542,13 @@ int Sltui_decoder(char whole_inst[], int index){
     rd_address[5] = '\0';
     
     Register* rs1 = find_register(rs1_address);
+    if(rs1 == NULL){
+        return -1;
+    }
     Register* rd = find_register(rd_address);
+    if(rd == NULL){
+        return -1;
+    }
 
     if (strcmp(funct3, "011") == 0){
         if ((unsigned int)(rs1->value) < (unsigned int)(bin_to_dec(imm, 12))){
@@ -542,7 +587,13 @@ int Jalr_decoder(char whole_inst[], int index){
     rd_address[5] = '\0';
     
     Register* rs1 = find_register(rs1_address);
+    if(rs1 == NULL){
+        return -1;
+    }
     Register* rd = find_register(rd_address);
+    if(rd == NULL){
+        return -1;
+    }
 
     if (strcmp(funct3, "000")== 0){
         rd->value = (index + 1)*4;
